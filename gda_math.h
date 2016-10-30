@@ -295,12 +295,15 @@ inline float Length(quaternion q) {
 }
 
 inline quaternion NormalizeQuaternion(quaternion quat){
-	float length = Length(quat);
+	quaternion Result;
 
+	float length = Length(quat);
 	float x = quat.x / length;
-	float y = quat.x / length;
-	float z = quat.x / length;
-	float w = quat.x / length;
+	float y = quat.y / length;
+	float z = quat.z / length;
+	float w = quat.w / length;
+
+	return(Result);
 }
 
 inline quaternion ConjugateQuaternion(quaternion quat){
@@ -395,7 +398,8 @@ inline matrix4x4 MultiplyMatrices(matrix4x4 m1, matrix4x4 m2){
 }
 
 inline vector4 MultiplyMatrixByVector4(matrix4x4 mat, vector4 vec){
-	vector4 res;
+	vector4 Result;
+#ifndef GDA_MATH_ALLOW_SIMD
 	for (int j = 0; j < 4; j++){
 		vector4 SourceV = Vector4(
 			mat.data[j * 4 + 0],
@@ -403,9 +407,54 @@ inline vector4 MultiplyMatrixByVector4(matrix4x4 mat, vector4 vec){
 			mat.data[j * 4 + 2],
 			mat.data[j * 4 + 3]);
 
-		res.data[j] = DotProduct(SourceV, vec);
+		Result.data[j] = DotProduct(SourceV, vec);
 	}
-	return res;
+#else
+#if 1
+	__m128 Mem1 = _mm_set1_ps(vec.data[0]);
+	__m128 Mem2 = _mm_set1_ps(vec.data[1]);
+	__m128 Mem3 = _mm_set1_ps(vec.data[2]);
+	__m128 Mem4 = _mm_set1_ps(vec.data[3]);
+
+	__m128 Column1 = _mm_set_ps(mat.d1, mat.c1, mat.b1, mat.a1);
+	__m128 Column2 = _mm_set_ps(mat.d2, mat.c2, mat.b2, mat.a2);
+	__m128 Column3 = _mm_set_ps(mat.d3, mat.c3, mat.b3, mat.a3);
+	__m128 Column4 = _mm_set_ps(mat.d4, mat.c4, mat.b4, mat.a4);
+
+	__m128 Res = _mm_add_ps(
+		_mm_add_ps(
+			_mm_mul_ps(Mem1, Column1),
+			_mm_mul_ps(Mem2, Column2)),
+		_mm_add_ps(
+			_mm_mul_ps(Mem3, Column3),
+			_mm_mul_ps(Mem4, Column4)));
+
+#else
+	__m128 OurVec = _mm_set_ps(vec.w, vec.z, vec.y, vec.x);
+
+	__m128 Row1 = _mm_load_ps(&mat.a1);
+	__m128 Row2 = _mm_load_ps(&mat.b1);
+	__m128 Row3 = _mm_load_ps(&mat.c1);
+	__m128 Row4 = _mm_load_ps(&mat.d1);
+
+	__m128 Res = _mm_add_ps(
+		_mm_add_ps(
+			_mm_mul_ps(OurVec, Row1),
+			_mm_mul_ps(OurVec, Row2)),
+		_mm_add_ps(
+			_mm_mul_ps(OurVec, Row3),
+			_mm_mul_ps(OurVec, Row4)));
+#endif
+
+	__declspec(align(16)) float TempArray[4];
+	_mm_store_ps(TempArray, Res);
+	Result.data[0] = TempArray[0];
+	Result.data[1] = TempArray[1];
+	Result.data[2] = TempArray[2];
+	Result.data[3] = TempArray[3];
+
+#endif
+	return(Result);
 }
 
 inline matrix4x4 RotationMatrix(quaternion qu){

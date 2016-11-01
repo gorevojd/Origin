@@ -77,6 +77,43 @@ typedef double real64;
 
 #include <math.h>
 
+int32 gda_StrLen(const char* Str1){
+	int32 Result = 0;
+	while (*Str1++ != 0){
+		Result = Result + 1;
+	}
+	return(Result);
+}
+
+//TODO(Dima): Maybe optimize this with SIMD;
+int32 gda_CompareStrings(const char* Str1, const char* Str2){
+	while (*Str1++ == *Str2++){
+		if (*Str1 == '\0'){
+			return 0;
+		}
+	}
+	return(*(unsigned char*)Str1 > *(unsigned char*)Str2);
+}
+
+
+char* gda_CopyString(char* Dest, char* Source, int SourceLen){
+	for (int i = 0; i < SourceLen; i++){
+		Dest[i] = Source[i];
+	}
+	Dest[SourceLen] = '\0';
+	return(Dest);
+}
+
+char* gda_UppercaseString(char* Str1){
+	char* Save = Str1;
+	int Diff = 'A' - 'a';
+	while (*Str1++ != '\0'){
+		if (*Str1 < 'A' && *Str1 >= 'a'){
+			*Str1 += Diff;
+		}
+	}
+	return Save;
+}
 
 #define GDA_COMMON
 #endif

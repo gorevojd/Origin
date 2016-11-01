@@ -410,7 +410,7 @@ inline vector4 MultiplyMatrixByVector4(matrix4x4 mat, vector4 vec){
 		Result.data[j] = DotProduct(SourceV, vec);
 	}
 #else
-#if 1
+#if 0
 	__m128 Mem1 = _mm_set1_ps(vec.data[0]);
 	__m128 Mem2 = _mm_set1_ps(vec.data[1]);
 	__m128 Mem3 = _mm_set1_ps(vec.data[2]);

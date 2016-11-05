@@ -1,10 +1,14 @@
 #ifndef GDA_MATH_H
 #ifndef GDA_MATH_DEFENITIONS
 
-#include <math.h>
-
 #ifdef GDA_MATH_ALLOW_SIMD
 #include <xmmintrin.h>
+#endif
+
+#ifdef IMPLEMENT_MATH_OURSELVES
+#include <intrin.h>
+#else
+#include <math.h>
 #endif
 
 #ifndef GDA_MATH_DEF
@@ -43,48 +47,45 @@ struct gdaVec3{
 
 struct gdaVec4{
 	union{
-		struct{
-			float x, y, z, w;
-		};
-		struct{
-			gdaVec3 xyz;
-			float w;
-		};
-		struct{
-			gdaVec3 rgb;
-			float a;
-		};
-		struct{
-			gdaVec2 xy;
-			gdaVec2 zw;
-		};
+		struct{ float x, y, z, w;};
+		struct{ gdaVec3 xyz; float w; };
+		struct{ gdaVec3 rgb; float a; };
+		struct{ gdaVec2 xy; gdaVec2 zw; };
 		float data[4];
 	};
 };
 
+typedef union gdaMat2{
+	struct{ gdaVec2 x, y; };
+	gdaVec2 row[2];
+	float data[4];
+};
 
+typedef union gdaMat3{
+	struct{ gdaVec3 x, y, z; };
+	gdaVec3 row[3];
+	float data[9];
+};
 
-struct gdaMat4{
-	union{
-		float data[16];
-		struct{
-			float a1, a2, a3, a4,
-					b1, b2, b3, b4,
-					c1, c2, c3, c4,
-					d1, d2, d3, d4;
-		};
-		struct {
-			gdaVec4 row1;
-			gdaVec4 row2;
-			gdaVec4 row3;
-			gdaVec4 row4;
-		};
-	};
+typedef union gdaMat4{
+	struct{ gdaVec4 x, y, z, w; };
+	gdaVec4 row[4];
+	float data[16];
 };
 
 struct gdaQuat{
-	float x, y, z, w;
+	union{
+		struct {
+			float x, y, z, w;
+		};
+		gdaVec3 xyz;
+		gdaVec4 xyzw;
+	};
 };
+
+typedef float gdaFloat2[2];
+typedef float gdaFloat3[3];
+typedef float gdaFloat4[4];
 
 #ifdef _MSC_VER
 #pragma warning(pop)
@@ -222,8 +223,21 @@ GDA_MATH_DEF gdaVec3 gda_vec3_reflect(gdaVec3 i, gdaVec3 n);
 GDA_MATH_DEF gdaVec2 gda_vec2_refract(gdaVec2 i, gdaVec2 n, float theta);
 GDA_MATH_DEF gdaVec3 gda_vec3_refract(gdaVec3 i, gdaVec3 n, float theta);
 
+/*Matrix definitions*/
+//TODO(Dima): Check if with pointers in params is faster
+GDA_MATH_DEF gdaMat2 gda_mat2_identity();
+
+GDA_MATH_DEF gdaMat2 gda_mat2_transpose(gdaMat2 m);
+GDA_MATH_DEF gdaMat2 gda_mat2_mul(gdaMat2 m1, gdaMat2 m2);
+GDA_MATH_DEF gdaVec2 gda_mat2_mul_vec2(gdaMat2 m, gdaVec2 v);
+GDA_MATH_DEF gdaMat2 gda_mat2_inverse(gdaMat2 m);
+GDA_MATH_DEF float gda_mat2_determinant(gdaMat2 m);
+
+
+
 /*Quaternions definitions*/
 GDA_MATH_DEF gdaQuat gda_quat(float x, float y, float z, float w);
+GDA_MATH_DEF gdaQuat gda_quat_from_array(float arr[4]);
 GDA_MATH_DEF gdaQuat gda_quat_from_angle(gdaVec3 axis, float angle_radians);
 GDA_MATH_DEF gdaQuat gda_quat_from_euler_angles(float pitch, float yaw, float roll);
 GDA_MATH_DEF gdaQuat gda_quat_identity(void);
@@ -247,6 +261,7 @@ GDA_MATH_DEF gdaVec3 gda_quat_axis(gdaQuat q);
 GDA_MATH_DEF float gda_quat_angle(gdaQuat q);
 
 GDA_MATH_DEF gdaVec3 gda_quat_rotate_vec3(gdaQuat q, gdaVec3 v);
+GDA_MATH_DEF gdaMat4 gda_mat4_from_quat(gdaQuat q);
 GDA_MATH_DEF gdaQuat gda_quat_from_mat4(gdaMat4 m);
 
 /*Interpolations definitions*/
@@ -526,13 +541,184 @@ gdaVec2 gda_vec2_norm0(gdaVec2 v){ float sqmag = gda_vec2_dot(v, v); return((sqm
 gdaVec3 gda_vec3_norm0(gdaVec3 v){ float sqmag = gda_vec3_dot(v, v); return((sqmag) == 0.0f ? gda_vec3_zero() : gda_vec3_mul(v, gda_rsqrt(sqmag))); }
 gdaVec4 gda_vec4_norm0(gdaVec4 v){ float sqmag = gda_vec4_dot(v, v); return((sqmag) == 0.0f ? gda_vec4_zero() : gda_vec4_mul(v, gda_rsqrt(sqmag))); }
 
-gdaVec2 gda_vec2_reflect(gdaVec2 i, gdaVec2 n);
-gdaVec3 gda_vec3_reflect(gdaVec3 i, gdaVec3 n);
-gdaVec2 gda_vec2_refract(gdaVec2 i, gdaVec2 n, float theta);
-gdaVec3 gda_vec3_refract(gdaVec3 i, gdaVec3 n, float theta);
+gdaVec2 gda_vec2_reflect(gdaVec2 i, gdaVec2 n){return(gda_vec2_sub(i, gda_vec2_mul(n, 2.0f * gda_vec2_dot(n, i))));}
+gdaVec3 gda_vec3_reflect(gdaVec3 i, gdaVec3 n){return(gda_vec3_sub(i, gda_vec3_mul(n, 2.0f * gda_vec3_dot(n, i))));}
+gdaVec2 gda_vec2_refract(gdaVec2 i, gdaVec2 n, float theta){
+	gdaVec2 r, a, b;
+	float dv, k;
+	dv = gda_vec2_dot(n, i);
+	k = 1.0f - theta * theta * (1.0f - dv * dv);
+	a = gda_vec2_mul(i, theta);
+	b = gda_vec2_mul(n, theta * dv * gda_sqrt(k));
+	r = gda_vec2_sub(a, b);
+	r = gda_vec2_mul(r, (float)(k >= 0.0f));
+	return(r);
+}
+gdaVec3 gda_vec3_refract(gdaVec3 i, gdaVec3 n, float theta){
+	gdaVec3 r, a, b;
+	float dv, k;
+	dv = gda_vec3_dot(n, i);
+	k = 1.0f - theta * theta * (1.0f - dv * dv);
+	a = gda_vec3_mul(i, theta);
+	b = gda_vec3_mul(n, theta * dv * gda_sqrt(k));
+	r = gda_vec3_sub(a, b);
+	r = gda_vec3_mul(r, (float)(k >= 0.0f));
+	return(r);
+}
 
+gdaQuat gda_quat(float x, float y, float z, float w){ gdaQuat q; q.x = x; q.y = y; q.z = z; q.w = w; return(q); }
+gdaQuat gda_quat_from_array(float arr[4]){ gdaQuat q; q.x = arr[0]; q.y = arr[1]; q.z = arr[2]; q.w = arr[3]; return (q); }
 
+gdaQuat gda_quat_from_angle(gdaVec3 axis, float angle_radians){
+	gdaQuat q;
+	q.xyz = gda_vec3_mul(gda_vec3_norm(axis), gda_sin(0.5f * angle_radians));
+	q.w = gda_cos(0.5f * angle_radians);
+	return q;
+}
+gdaQuat gda_quat_from_euler_angles(float pitch, float yaw, float roll){
+	gdaQuat q, p, y, r;
+	p = gda_quat_from_angle(gda_vec3(1, 0, 0), pitch);
+	y = gda_quat_from_angle(gda_vec3(0, 1, 0), yaw);
+	r = gda_quat_from_angle(gda_vec3(0, 0, 1), roll);
+	q = gda_quat_mul(y, p);
+	q = gda_quat_mul(q, r);
+	return q;
+}
+gdaQuat gda_quat_identity(void){ gdaQuat q = { 0, 0, 0, 1 }; return q; }
 
+gdaQuat gda_quat_add(gdaQuat q1, gdaQuat q2){gdaQuat q; q.xyzw = gda_vec4_add(q1.xyzw, q2.xyzw); return(q);}
+gdaQuat gda_quat_sub(gdaQuat q1, gdaQuat q2){gdaQuat q; q.xyzw = gda_vec4_sub(q1.xyzw, q2.xyzw); return(q);}
+gdaQuat gda_quat_mul(gdaQuat q1, gdaQuat q2){
+	gdaQuat q;
+	q.x = q1.w * q2.x + q1.x * q2.w + q1.y * q2.z - q1.z * q2.y;
+	q.y = q1.w * q2.y - q1.x * q2.z + q1.y * q2.w + q1.z * q2.x;
+	q.z = q1.w * q2.z + q1.x * q2.y - q1.y * q2.x + q1.z * q2.w;
+	q.w = q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z;
+	return(q);
+}
+gdaQuat gda_quat_div(gdaQuat q1, gdaQuat q2){ gdaQuat iq2 = gda_quat_inverse(q2); return(gda_quat_mul(q1, iq2)); }
+
+gdaQuat gda_quat_mulf(gdaQuat q, float s){ gdaQuat r; r.xyzw = gda_vec4_mul(q.xyzw, s); return(r); }
+gdaQuat gda_quat_divf(gdaQuat q, float s){ gdaQuat r; r.xyzw = gda_vec4_div(q.xyzw, s); return(r); }
+
+float gda_quat_dot(gdaQuat q1, gdaQuat q2){ float r = gda_vec4_dot(q1.xyzw, q2.xyzw); return r; }
+float gda_quat_mag(gdaQuat q){ return gda_sqrt(gda_quat_dot(q, q)); }
+
+gdaQuat gda_quat_norm(gdaQuat q){ return(gda_quat_divf(q, gda_quat_mag(q))); }
+gdaQuat gda_quat_conj(gdaQuat q){ gdaQuat r; r.xyz = gda_vec3(-q.x, -q.y, -q.z); r.w = q.w; return(r); }
+gdaQuat gda_quat_inverse(gdaQuat q){ gdaQuat r = gda_quat_conj(q); r = gda_quat_divf(r, gda_quat_dot(q, q)); return(r); }
+
+gdaVec3 gda_quat_axis(gdaQuat q){
+	gdaQuat n = gda_quat_norm(q);
+	gdaVec3 r = gda_vec3_div(n.xyz, gda_sin(gda_arccos(q.w)));
+	return(r);
+}
+float gda_quat_angle(gdaQuat q){
+	float mag = gda_quat_mag(q);
+	float c = q.w * (1.0f / mag);
+	float angle = 2.0f * gda_arccos(c);
+	return(angle);
+}
+
+gdaVec3 gda_quat_rotate_vec3(gdaQuat q, gdaVec3 v){
+	gdaVec3 r, t, p;
+	t = gda_vec3_cross(q.xyz, v);
+	t = gda_vec3_mul(t, 2.0f);
+	p = gda_vec3_cross(q.xyz, t);
+	return (gda_vec3_add(gda_vec3_add(gda_vec3_mul(t, q.w), v), p));
+}
+
+gdaMat4 gda_mat4_from_quat(gdaQuat q){
+	gdaMat4 r;
+	*(r.data + 1)  = 1.0 - 2 * q.y * q.y - 2 * q.z * q.z;
+	*(r.data + 2)  = 2 * q.x * q.y + 2 * q.z * q.w;
+	*(r.data + 3)  = 2 * q.x * q.z - 2 * q.y * q.w;
+	*(r.data + 4)  = 0.0f;
+					    
+	*(r.data + 4)  = 2 * q.x * q.y - 2 * q.z * q.w;
+	*(r.data + 5)  = 1.0 - 2 * q.x * q.x - 2 * q.z * q.z;
+	*(r.data + 6)  = 2 * q.y * q.z + 2 * q.x * q.w;
+	*(r.data + 7)  = 0.0f;
+					    
+	*(r.data + 8)  = 2 * q.x * q.z + 2 * q.y * q.w;
+	*(r.data + 9)  = 2 * q.y * q.z - 2 * q.x * q.w;
+	*(r.data + 10) = 1.0 - 2 * q.x * q.x - 2 * q.y * q.y;
+	*(r.data + 11) = 0.0f;
+
+	*(r.data + 12) = 0.0f;
+	*(r.data + 13) = 0.0f;
+	*(r.data + 14) = 0.0f;
+	*(r.data + 15) = 1.0f;
+	return(r);
+}
+
+gdaQuat gda_quat_from_mat4(gdaMat4 m){
+	gdaQuat r;
+
+	gdaFloat4 *fm;
+	float four_x_squared_minus_1, four_y_squared_minus_1,
+		four_z_squared_minus_1, four_w_squared_minus_1,
+		four_biggest_squared_minus_1;
+
+	int biggest_index = 0;
+	float biggest_value, mult;
+
+	fm = gda_float44_m(m);
+
+	four_x_squared_minus_1 = fm[0][0] - fm[1][1] - fm[2][2];
+	four_y_squared_minus_1 = fm[1][1] - fm[0][0] - fm[2][2];
+	four_z_squared_minus_1 = fm[2][2] - fm[0][0] - fm[1][1];
+	four_w_squared_minus_1 = fm[0][0] + fm[1][1] + fm[2][2];
+
+	four_biggest_squared_minus_1 = four_w_squared_minus_1;
+	if (four_x_squared_minus_1 > four_biggest_squared_minus_1){
+		four_biggest_squared_minus_1 = four_x_squared_minus_1;
+		biggest_index = 1;
+	}
+	if (four_y_squared_minus_1 > four_biggest_squared_minus_1){
+		four_biggest_squared_minus_1 = four_y_squared_minus_1;
+		biggest_index = 2;
+	}
+	if (four_z_squared_minus_1 > four_biggest_squared_minus_1){
+		four_biggest_squared_minus_1 = four_z_squared_minus_1;
+		biggest_index = 3;
+	}
+
+	biggest_value = gda_sqrt(four_biggest_squared_minus_1 + 1.0f) * 0.5f;
+	mult = 0.25f / biggest_value;
+
+	switch (biggest_index) {
+		case 0:{
+			r.w = biggest_value;
+			r.x = (fm[1][2] - fm[2][1]) * mult;
+			r.y = (fm[2][0] - fm[0][2]) * mult;
+			r.z = (fm[0][1] - fm[1][0]) * mult;
+		}break;
+		case 1:{
+			r.w = (fm[1][2] - fm[2][1]) * mult;
+			r.x = biggest_value;
+			r.y = (fm[0][1] + fm[1][0]) * mult;
+			r.z = (fm[2][0] + fm[0][2]) * mult;
+		}break;
+		case 2:{
+			r.w = (fm[2][0] - fm[0][2]) * mult;
+			r.x = (fm[0][1] + fm[1][0]) * mult;
+			r.y = biggest_value;
+			r.z = (fm[1][2] + fm[2][1]) * mult;
+		}break;
+		case 3:{
+			r.w = (fm[0][1] - fm[1][0]) * mult;
+			r.x = (fm[2][0] + fm[0][2]) * mult;
+			r.y = (fm[1][2] + fm[2][1]) * mult;
+			r.z = biggest_value;
+		}	break;
+		default:{
+
+		}break;
+	}
+
+	return(r);
+}
 
 /*
 inline gdaVec2 gda_vec2(){

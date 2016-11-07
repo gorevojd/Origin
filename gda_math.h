@@ -1,5 +1,4 @@
 #ifndef GDA_MATH_H
-#ifndef GDA_MATH_DEFENITIONS
 
 #ifdef GDA_MATH_ALLOW_SIMD
 #include <xmmintrin.h>
@@ -114,6 +113,9 @@ typedef float gdaFloat4[4];
 #define GDA_MATH_LOG_TWO 0.693147180559945309417232121458176568f
 #define GDA_MATH_LOG_TEN 2.30258509299404568401799145468436421f
 
+#define GDA_DEG_TO_RAD 0.0174533
+#define GDA_RAD_TO_DEG 57.2958
+
 #define GDA_MATH_CONSTANTS
 #endif
 
@@ -223,17 +225,63 @@ GDA_MATH_DEF gdaVec3 gda_vec3_reflect(gdaVec3 i, gdaVec3 n);
 GDA_MATH_DEF gdaVec2 gda_vec2_refract(gdaVec2 i, gdaVec2 n, float theta);
 GDA_MATH_DEF gdaVec3 gda_vec3_refract(gdaVec3 i, gdaVec3 n, float theta);
 
+GDA_MATH_DEF float gda_vec2_aspect_ratio(gdaVec2 v);
+
 /*Matrix definitions*/
-//TODO(Dima): Check if with pointers in params is faster
-GDA_MATH_DEF gdaMat2 gda_mat2_identity();
+GDA_MATH_DEF void gda_mat2_identity(gdaMat2* m);
+GDA_MATH_DEF void gda_mat2_transpose(gdaMat2* m);
+GDA_MATH_DEF void gda_mat2_mul(gdaMat2* out, gdaMat2* m1, gdaMat2* m2);
+GDA_MATH_DEF gdaVec2 gda_mat2_mul_vec2(gdaMat2* m, gdaVec2 v);
+GDA_MATH_DEF void gda_mat2_inverse(gdaMat2* out, gdaMat2* m);
+GDA_MATH_DEF float gda_mat2_determinant(gdaMat2* m);
 
-GDA_MATH_DEF gdaMat2 gda_mat2_transpose(gdaMat2 m);
-GDA_MATH_DEF gdaMat2 gda_mat2_mul(gdaMat2 m1, gdaMat2 m2);
-GDA_MATH_DEF gdaVec2 gda_mat2_mul_vec2(gdaMat2 m, gdaVec2 v);
-GDA_MATH_DEF gdaMat2 gda_mat2_inverse(gdaMat2 m);
-GDA_MATH_DEF float gda_mat2_determinant(gdaMat2 m);
+GDA_MATH_DEF void gda_mat3_identity(gdaMat3* m);
+GDA_MATH_DEF void gda_mat3_transpose(gdaMat3* m);
+GDA_MATH_DEF void gda_mat3_mul(gdaMat3* out, gdaMat3* m1, gdaMat3* m2);
+GDA_MATH_DEF gdaVec3 gda_mat3_mul_vec3(gdaMat3* m, gdaVec3 v);
+GDA_MATH_DEF void gda_mat3_inverse(gdaMat3* out, gdaMat3* m);
+GDA_MATH_DEF float gda_mat3_determinant(gdaMat3* m);
 
+GDA_MATH_DEF void gda_mat4_identity(gdaMat4* m);
+GDA_MATH_DEF void gda_mat4_transpose(gdaMat4* m);
+GDA_MATH_DEF void gda_mat4_mul(gdaMat4* out, gdaMat4* m1, gdaMat4* m2);
+GDA_MATH_DEF gdaVec4 gda_mat4_mul_vec4(gdaMat4* m, gdaVec4 v);
+GDA_MATH_DEF void gda_mat4_inverse(gdaMat4* out, gdaMat4* in);
 
+GDA_MATH_DEF void gda_mat4_translate(gdaMat4* out, gdaVec3 v);
+GDA_MATH_DEF void gda_mat4_rotate(gdaMat4* out, gdaVec3 v, float angle_radians);
+GDA_MATH_DEF void gda_mat4_scale(gdaMat4* out, gdaVec3 v);
+GDA_MATH_DEF void gda_mat4_scalef(gdaMat4* out, float s);
+GDA_MATH_DEF void gda_mat4_ortho2d(gdaMat4* out, float left, float right, float bottom, float top);
+GDA_MATH_DEF void gda_mat4_ortho3d(gdaMat4* out, float left, float right, float bottom, float top, float z_near, float z_far);
+GDA_MATH_DEF void gda_mat4_perspective(gdaMat4* out, float fovy, float aspect, float z_near, float z_far);
+GDA_MATH_DEF void gda_mat4_infinite_perspective(gdaMat4* out, float fovy, float aspect, float z_near);
+
+GDA_MATH_DEF gdaMat4 gda_mat4_look_at(gdaVec3 eye, gdaVec3 centre, gdaVec3 up);
+
+GDA_MATH_DEF void gda_float22_identity(float m[2][2]);
+GDA_MATH_DEF gdaFloat2* gda_float22_m(gdaMat2* m);
+GDA_MATH_DEF gdaFloat2* gda_float22_v(gdaVec2 m[2]);
+GDA_MATH_DEF gdaFloat2* gda_float22_4(float m[4]);
+GDA_MATH_DEF void gda_float22_transpose(float(*vec)[2]);
+GDA_MATH_DEF void gda_float22_mul(float(*out)[2], float(*mat1)[2], float(*mat2)[2]);
+GDA_MATH_DEF gdaVec2 gda_float22_mul_vec2(float m[2][2], gdaVec2 v1);
+
+GDA_MATH_DEF void gda_float33_identity(float m[3][3]);
+GDA_MATH_DEF gdaFloat3* gda_float33_m(gdaMat3* m);
+GDA_MATH_DEF gdaFloat3* gda_float33_v(gdaVec3 m[3]);
+GDA_MATH_DEF gdaFloat3* gda_float33_9(float m[9]);
+GDA_MATH_DEF void gda_float33_transpose(float(*vec)[3]);
+GDA_MATH_DEF void gda_float33_mul(float(*out)[3], float(*mat1)[3], float(*mat2)[3]);
+GDA_MATH_DEF gdaVec3 gda_float33_mul_vec3(float m[3][3], gdaVec3 v1);
+
+GDA_MATH_DEF void gda_float44_identity(float m[4][4]);
+GDA_MATH_DEF gdaFloat4* gda_float44_m(gdaMat4* m);
+GDA_MATH_DEF gdaFloat4* gda_float44_v(gdaVec4 m[4]);
+GDA_MATH_DEF gdaFloat4* gda_float44_16(float m[16]);
+GDA_MATH_DEF void gda_float44_transpose(float(*vec)[4]);
+GDA_MATH_DEF void gda_float44_mul(float(*out)[4], float(*mat1)[4], float(*mat2)[4]);
+GDA_MATH_DEF gdaVec4 gda_float44_mul_vec4(float m[4][4], gdaVec4 v1);
 
 /*Quaternions definitions*/
 GDA_MATH_DEF gdaQuat gda_quat(float x, float y, float z, float w);
@@ -261,8 +309,8 @@ GDA_MATH_DEF gdaVec3 gda_quat_axis(gdaQuat q);
 GDA_MATH_DEF float gda_quat_angle(gdaQuat q);
 
 GDA_MATH_DEF gdaVec3 gda_quat_rotate_vec3(gdaQuat q, gdaVec3 v);
-GDA_MATH_DEF gdaMat4 gda_mat4_from_quat(gdaQuat q);
-GDA_MATH_DEF gdaQuat gda_quat_from_mat4(gdaMat4 m);
+GDA_MATH_DEF void gda_mat4_from_quat(gdaMat4* out, gdaQuat q);
+GDA_MATH_DEF gdaQuat gda_quat_from_mat4(gdaMat4* m);
 
 /*Interpolations definitions*/
 GDA_MATH_DEF float gda_lerp(float a, float b, float t);
@@ -282,11 +330,25 @@ GDA_MATH_DEF gdaQuat gda_quat_squad(gdaQuat p, gdaQuat a, gdaQuat b, gdaQuat q, 
 GDA_MATH_DEF gdaQuat gda_quat_slerp_approx(gdaQuat a, gdaQuat b, float t);
 GDA_MATH_DEF gdaQuat gda_quat_squad_approx(gdaQuat p, gdaQuat a, gdaQuat b, gdaQuat q, float t);
 
-#define GDA_MATH_DEFENITIONS
+
+#define GDA_MATH_H
 #endif
 
 #define GDA_MATH_IMPLEMENTATION
 #ifdef GDA_MATH_IMPLEMENTATION
+
+static void gda__memcpy_4byte(void *dest, void const *src, size_t size){
+	size_t i;
+	unsigned int *d, *s;
+	d = (unsigned int *)dest;
+	s = (unsigned int *)src;
+	for (int i = 0; i < size / 4; i++){
+		*d++ = *s++;
+	}
+}
+
+float gda_to_radians(float degrees){ return(degrees * GDA_DEG_TO_RAD); }
+float gda_to_degrees(float radians){ return(radians * GDA_RAD_TO_DEG); }
 
 #ifdef IMPLEMENT_MATH_OURSELVES
 #ifdef _MSC_VER
@@ -566,6 +628,397 @@ gdaVec3 gda_vec3_refract(gdaVec3 i, gdaVec3 n, float theta){
 	return(r);
 }
 
+float gda_vec2_aspect_ratio(gdaVec2 v){ return ((v.y < 0.0001f) ? 0.0f : v.x / v.y); }
+
+/*Matrices implementation*/
+void gda_mat2_identity(gdaMat2* m){ gda_float22_identity(gda_float22_m(m)); }
+void gda_mat2_transpose(gdaMat2* m){ gda_float22_transpose(gda_float22_m(m)); }
+void gda_mat2_mul(gdaMat2* out, gdaMat2* m1, gdaMat2* m2){ gda_float22_mul(gda_float22_m(out), gda_float22_m(m1), gda_float22_m(m2)); }
+gdaVec2 gda_mat2_mul_vec2(gdaMat2* m, gdaVec2 v){ return(gda_float22_mul_vec2(gda_float22_m(m), v));}
+
+void gda_mat2_inverse(gdaMat2* out, gdaMat2* m){
+	gdaFloat2 *o = gda_float22_m(out);
+	gdaFloat2 *i = gda_float22_m(m);
+	float ood = 1.0f / gda_mat2_determinant(m);
+
+	o[0][0] = +i[1][1] * ood;
+	o[0][1] = -i[0][1] * ood;
+	o[1][0] = -i[1][0] * ood;
+	o[1][1] = +i[0][0] * ood;
+}
+
+float gda_mat2_determinant(gdaMat2* m){
+	gdaFloat2* e = gda_float22_m(m);
+	return (e[0][0] * e[1][1] - e[1][0] * e[0][1]);
+}
+
+void gda_mat3_identity(gdaMat3* m){ gda_float33_identity(gda_float33_m(m)); }
+void gda_mat3_transpose(gdaMat3* m){ gda_float33_transpose(gda_float33_m(m)); }
+void gda_mat3_mul(gdaMat3* out, gdaMat3* m1, gdaMat3* m2) { gda_float33_mul(gda_float33_m(out), gda_float33_m(m1), gda_float33_m(m2)); }
+gdaVec3 gda_mat3_mul_vec3(gdaMat3* m, gdaVec3 v){ return(gda_float33_mul_vec3(gda_float33_m(m), v)); }
+
+void gda_mat3_inverse(gdaMat3* out, gdaMat3* m){
+	gdaFloat3 *o = gda_float33_m(out);
+	gdaFloat3 *i = gda_float33_m(m);
+
+	float ood = 1.0f / gda_mat3_determinant(m);
+
+	o[0][0] = +(i[1][1] * i[2][2] - i[2][1] * i[1][2]) * ood;
+	o[0][1] = -(i[1][0] * i[2][2] - i[2][0] * i[1][2]) * ood;
+	o[0][2] = +(i[1][0] * i[2][1] - i[2][0] * i[1][1]) * ood;
+	o[1][0] = -(i[0][1] * i[2][2] - i[2][1] * i[0][2]) * ood;
+	o[1][1] = +(i[0][0] * i[2][2] - i[2][0] * i[0][2]) * ood;
+	o[1][2] = -(i[0][0] * i[2][1] - i[2][0] * i[0][1]) * ood;
+	o[2][0] = +(i[0][1] * i[1][2] - i[1][1] * i[0][2]) * ood;
+	o[2][1] = -(i[0][0] * i[1][2] - i[1][0] * i[0][2]) * ood;
+	o[2][2] = +(i[0][0] * i[1][1] - i[1][0] * i[0][1]) * ood;
+}
+
+float gda_mat3_determinant(gdaMat3* m){
+	gdaFloat3 *e = gda_float33_m(m);
+	return(+e[0][0] * (e[1][1] * e[2][2] - e[1][2] * e[2][1])
+		- e[0][1] * (e[1][0] * e[2][2] - e[1][2] * e[2][0])
+		+ e[0][2] * (e[1][0] * e[2][1] - e[1][1] * e[2][0]));
+}
+
+void gda_mat4_identity(gdaMat4* m){ gda_float44_identity(gda_float44_m(m)); }
+void gda_mat4_transpose(gdaMat4* m){ gda_float44_transpose(gda_float44_m(m)); }
+void gda_mat4_mul(gdaMat4* out, gdaMat4* m1, gdaMat4* m2){ gda_float44_mul(gda_float44_m(out), gda_float44_m(m1), gda_float44_m(m2)); }
+gdaVec4 gda_mat4_mul_vec4(gdaMat4* m, gdaVec4 v){ return(gda_float44_mul_vec4(gda_float44_m(m), v)); }
+
+void gda_mat4_inverse(gdaMat4* out, gdaMat4* in){
+	gdaFloat4 *o = gda_float44_m(out);
+	gdaFloat4 *m = gda_float44_m(in);
+
+	float ood;
+
+	float sf00 = m[2][2] * m[3][3] - m[3][2] * m[2][3];
+	float sf01 = m[2][1] * m[3][3] - m[3][1] * m[2][3];
+	float sf02 = m[2][1] * m[3][2] - m[3][1] * m[2][2];
+	float sf03 = m[2][0] * m[3][3] - m[3][0] * m[2][3];
+	float sf04 = m[2][0] * m[3][2] - m[3][0] * m[2][2];
+	float sf05 = m[2][0] * m[3][1] - m[3][0] * m[2][1];
+	float sf06 = m[1][2] * m[3][3] - m[3][2] * m[1][3];
+	float sf07 = m[1][1] * m[3][3] - m[3][1] * m[1][3];
+	float sf08 = m[1][1] * m[3][2] - m[3][1] * m[1][2];
+	float sf09 = m[1][0] * m[3][3] - m[3][0] * m[1][3];
+	float sf10 = m[1][0] * m[3][2] - m[3][0] * m[1][2];
+	float sf11 = m[1][1] * m[3][3] - m[3][1] * m[1][3];
+	float sf12 = m[1][0] * m[3][1] - m[3][0] * m[1][1];
+	float sf13 = m[1][2] * m[2][3] - m[2][2] * m[1][3];
+	float sf14 = m[1][1] * m[2][3] - m[2][1] * m[1][3];
+	float sf15 = m[1][1] * m[2][2] - m[2][1] * m[1][2];
+	float sf16 = m[1][0] * m[2][3] - m[2][0] * m[1][3];
+	float sf17 = m[1][0] * m[2][2] - m[2][0] * m[1][2];
+	float sf18 = m[1][0] * m[2][1] - m[2][0] * m[1][1];
+
+	o[0][0] = +(m[1][1] * sf00 - m[1][2] * sf01 + m[1][3] * sf02);
+	o[0][1] = -(m[1][0] * sf00 - m[1][2] * sf03 + m[1][3] * sf04);
+	o[0][2] = +(m[1][0] * sf01 - m[1][1] * sf03 + m[1][3] * sf05);
+	o[0][3] = -(m[1][0] * sf02 - m[1][1] * sf04 + m[1][2] * sf05);
+
+	o[1][0] = -(m[0][1] * sf00 - m[0][2] * sf01 + m[0][3] * sf02);
+	o[1][1] = +(m[0][0] * sf00 - m[0][2] * sf03 + m[0][3] * sf04);
+	o[1][2] = -(m[0][0] * sf01 - m[0][1] * sf03 + m[0][3] * sf05);
+	o[1][3] = +(m[0][0] * sf02 - m[0][1] * sf04 + m[0][2] * sf05);
+
+	o[2][0] = +(m[0][1] * sf06 - m[0][2] * sf07 + m[0][3] * sf08);
+	o[2][1] = -(m[0][0] * sf06 - m[0][2] * sf09 + m[0][3] * sf10);
+	o[2][2] = +(m[0][0] * sf11 - m[0][1] * sf09 + m[0][3] * sf12);
+	o[2][3] = -(m[0][0] * sf08 - m[0][1] * sf10 + m[0][2] * sf12);
+
+	o[3][0] = -(m[0][1] * sf13 - m[0][2] * sf14 + m[0][3] * sf15);
+	o[3][1] = +(m[0][0] * sf13 - m[0][2] * sf16 + m[0][3] * sf17);
+	o[3][2] = -(m[0][0] * sf14 - m[0][1] * sf16 + m[0][3] * sf18);
+	o[3][3] = +(m[0][0] * sf15 - m[0][1] * sf17 + m[0][2] * sf18);
+
+	ood = 1.0f / (
+		m[0][0] * o[0][0] +
+		m[0][1] * o[0][1] +
+		m[0][2] * o[0][2] +
+		m[0][3] * o[0][3]);
+
+	o[0][0] *= ood;
+	o[0][1] *= ood;
+	o[0][2] *= ood;
+	o[0][3] *= ood;
+	o[1][0] *= ood;
+	o[1][1] *= ood;
+	o[1][2] *= ood;
+	o[1][3] *= ood;
+	o[2][0] *= ood;
+	o[2][1] *= ood;
+	o[2][2] *= ood;
+	o[2][3] *= ood;
+	o[3][0] *= ood;
+	o[3][1] *= ood;
+	o[3][2] *= ood;
+	o[3][3] *= ood;
+}
+
+void gda_mat4_translate(gdaMat4* out, gdaVec3 v){
+	gda_mat4_identity(out);
+	out->x.data[3] = v.x;
+	out->y.data[3] = v.y;
+	out->z.data[3] = v.y;
+	out->data[15] = 1;
+}
+
+void gda_mat4_rotate(gdaMat4* out, gdaVec3 v, float angle_radians){
+	float c, s;
+	gdaVec3 axis, t;
+	gdaFloat4* rot;
+
+	c = gda_cos(angle_radians);
+	s = gda_sin(angle_radians);
+
+	axis = gda_vec3_norm(v);
+	t = gda_vec3_mul(axis, 1.0f - c);
+
+	gda_mat4_identity(out);
+	rot = gda_float44_m(out);
+
+	rot[0][0] = c + t.x*axis.x;
+	rot[0][1] = 0 + t.x*axis.y + s*axis.z;
+	rot[0][2] = 0 + t.x*axis.z - s*axis.y;
+	rot[0][3] = 0;
+
+	rot[1][0] = 0 + t.y*axis.x - s*axis.z;
+	rot[1][1] = c + t.y*axis.y;
+	rot[1][2] = 0 + t.y*axis.z + s*axis.x;
+	rot[1][3] = 0;
+
+	rot[2][0] = 0 + t.z*axis.x + s*axis.y;
+	rot[2][1] = 0 + t.z*axis.y - s*axis.x;
+	rot[2][2] = c + t.z*axis.z;
+	rot[2][3] = 0;
+}
+
+void gda_mat4_scale(gdaMat4* out, gdaVec3 v){
+	gda_mat4_identity(out);
+	out->data[0] = v.x;
+	out->data[5] = v.y;
+	out->data[10] = v.z;
+}
+
+void gda_mat4_scalef(gdaMat4* out, float s){
+	gda_mat4_identity(out);
+	out->data[0] = s;
+	out->data[5] = s;
+	out->data[10] = s;
+}
+
+void gda_mat4_ortho2d(gdaMat4* out, float left, float right, float bottom, float top){
+	gdaFloat4* m;
+	gda_mat4_identity(out);
+	m = gda_float44_m(out);
+
+	m[0][0] = 2.0f / (right - left);
+	m[1][1] = 2.0f / (top - bottom);
+	m[2][2] = -1.0f;
+	m[3][0] = -(right + left) / (right - left);
+	m[3][1] = -(top + bottom) / (top - bottom);
+}
+
+void gda_mat4_ortho3d(gdaMat4* out, float left, float right, float bottom, float top, float z_near, float z_far){
+	gdaFloat4 *m;
+	gda_mat4_identity(out);
+	m = gda_float44_m(out);
+
+	m[0][0] = +2.0f / (right - left);
+	m[1][1] = +2.0f / (top - bottom);
+	m[2][2] = -2.0f / (z_far - z_near);
+	m[3][0] = -(right + left) / (right - left);
+	m[3][1] = -(top + bottom) / (top - bottom);
+	m[3][2] = -(z_far + z_near) / (z_far - z_near);
+}
+
+void gda_mat4_perspective(gdaMat4* out, float fovy, float aspect, float z_near, float z_far){
+	float tan_half_fovy = gda_tan(0.5f * fovy);
+	gdaMat4 zero_mat = { 0 };
+	gdaFloat4 *m = gda_float44_m(out);
+	*out = zero_mat;
+
+	m[0][0] = 1.0f / (aspect*tan_half_fovy);
+	m[1][1] = 1.0f / (tan_half_fovy);
+	m[2][2] = -(z_far + z_near) / (z_far - z_near);
+	m[2][3] = -1.0f;
+	m[3][2] = -2.0f*z_far*z_near / (z_far - z_near);
+}
+
+void gda_mat4_infinite_perspective(gdaMat4* out, float fovy, float aspect, float z_near){
+	float range = gda_tan(0.5f * fovy) * z_near;
+	float left = -range * aspect;
+	float right = range * aspect;
+	float bottom = -range;
+	float top = range;
+	gdaMat4 zero_mat = { 0 };
+	gdaFloat4 *m = gda_float44_m(out);
+	*out = zero_mat;
+
+	m[0][0] = (2.0f*z_near) / (right - left);
+	m[1][1] = (2.0f*z_near) / (top - bottom);
+	m[2][2] = -1.0f;
+	m[2][3] = -1.0f;
+	m[3][2] = -2.0f*z_near;
+}
+
+void gda_mat4_look_at(gdaMat4* out, gdaVec3 eye, gdaVec3 centre, gdaVec3 up){
+	gdaVec3 f, s, u;
+	gdaFloat4 *m;
+
+	f = gda_vec3_sub(centre, eye);
+	f = gda_vec3_norm(f);
+
+	s = gda_vec3_cross(f, up);
+	s = gda_vec3_norm(s);
+
+	u = gda_vec3_cross(s, f);
+
+	gda_mat4_identity(out);
+	m = gda_float44_m(out);
+
+	m[0][0] = +s.x;
+	m[1][0] = +s.y;
+	m[2][0] = +s.z;
+
+	m[0][1] = +u.x;
+	m[1][1] = +u.y;
+	m[2][1] = +u.z;
+
+	m[0][2] = -f.x;
+	m[1][2] = -f.y;
+	m[2][2] = -f.z;
+
+	m[3][0] = gda_vec3_dot(s, eye);
+	m[3][1] = gda_vec3_dot(u, eye);
+	m[3][2] = gda_vec3_dot(f, eye);
+}
+
+void gda_float22_identity(float m[2][2]){
+	m[0][0] = 1; m[0][1] = 0;
+	m[1][0] = 0; m[1][1];
+}
+gdaFloat2* gda_float22_m(gdaMat2* m){ return ((gdaFloat2*)m); }
+gdaFloat2* gda_float22_v(gdaVec2 m[2]){ return ((gdaFloat2*)m); }
+gdaFloat2* gda_float22_4(float m[4]){ return ((gdaFloat2*)m); }
+void gda_float22_transpose(float(*vec)[2]){
+	int i, j;
+	for (j = 0; j < 2; j++){
+		for (i = j + 1; i < 2; i++){
+			float t = vec[i][j];
+			vec[i][j] = vec[j][i];
+			vec[j][i] = t;
+		}
+	}
+}
+void gda_float22_mul(float(*out)[2], float(*mat1)[2], float(*mat2)[2]){
+	int i, j;
+	float temp1[2][2], temp2[2][2];
+	if (mat1 == out){ gda__memcpy_4byte(temp1, mat1, sizeof(temp1)); mat1 = temp1; }
+	if (mat2 == out){ gda__memcpy_4byte(temp2, mat2, sizeof(temp2)); mat2 = temp2; }
+	for (j = 0; j < 2; j++){
+		for (int i = 0; i < 2; i++){
+			out[j][i] =
+				mat1[0][i] * mat2[j][0] +
+				mat1[1][i] * mat2[j][i];
+		}
+	}
+}
+gdaVec2 gda_float22_mul_vec2(float m[2][2], gdaVec2 v1){
+	gdaVec2 r;
+	r.x = m[0][0] * v1.x + m[0][1] * v1.y;
+	r.y = m[1][0] * v1.x + m[1][1] * v1.y;
+	return(r);
+}
+
+void gda_float33_identity(float m[3][3]){
+	m[0][0] = 1; m[0][1] = 0; m[0][2] = 0;
+	m[1][0] = 0; m[1][1] = 1; m[1][2] = 0;
+	m[2][0] = 0; m[2][1] = 0; m[2][2] = 1;
+}
+gdaFloat3* gda_float33_m(gdaMat3* m){ return((gdaFloat3*)m); }
+gdaFloat3* gda_float33_v(gdaVec3 m[3]){ return((gdaFloat3*)m); }
+gdaFloat3* gda_float33_9(float m[9]){ return((gdaFloat3*)m); }
+void gda_float33_transpose(float(*vec)[3]){
+	int i, j;
+	for (j = 0; j < 3; j++) {
+		for (i = j + 1; i < 3; i++) {
+			float t = vec[i][j];
+			vec[i][j] = vec[j][i];
+			vec[j][i] = t;
+		}
+	}
+}
+void gda_float33_mul(float(*out)[3], float(*mat1)[3], float(*mat2)[3]){
+	int i, j;
+	float temp1[3][3], temp2[3][3];
+	if (mat1 == out) { gda__memcpy_4byte(temp1, mat1, sizeof(temp1)); mat1 = temp1; }
+	if (mat2 == out) { gda__memcpy_4byte(temp2, mat2, sizeof(temp2)); mat2 = temp2; }
+	for (j = 0; j < 3; j++) {
+		for (i = 0; i < 3; i++) {
+			out[j][i] =
+				mat1[0][i] * mat2[j][0] + 
+				mat1[1][i] * mat2[j][1] +
+				mat1[2][i] * mat2[j][2];
+		}
+	}
+}
+gdaVec3 gda_float33_mul_vec3(float m[3][3], gdaVec3 v1){
+	gdaVec3 r;
+	r.x = m[0][0] * v1.x + m[0][1] * v1.y + m[0][2] * v1.z;
+	r.y = m[1][0] * v1.x + m[1][1] * v1.y + m[1][2] * v1.z;
+	r.z = m[2][0] * v1.x + m[2][1] * v1.y + m[2][2] * v1.z;
+	return(r);
+}
+
+void gda_float44_identity(float m[4][4]){
+	m[0][0] = 1; m[0][1] = 0; m[0][2] = 0; m[0][3] = 0;
+	m[1][0] = 0; m[1][1] = 1; m[1][2] = 0; m[1][3] = 0;
+	m[2][0] = 0; m[2][1] = 0; m[2][2] = 1; m[2][3] = 0;
+	m[3][0] = 0; m[3][1] = 0; m[3][2] = 0; m[3][3] = 1;
+}
+
+gdaFloat4* gda_float44_m(gdaMat4* m){ return ((gdaFloat4*)m); }
+gdaFloat4* gda_float44_v(gdaVec4 m[4]){ return ((gdaFloat4*)m); }
+gdaFloat4* gda_float44_16(float m[16]){ return ((gdaFloat4*)m); }
+
+void gda_float44_transpose(float(*vec)[4]){
+	int i, j;
+	for (j = 0; j < 4; j++) {
+		for (i = j + 1; i < 4; i++) {
+			float t = vec[i][j];
+			vec[i][j] = vec[j][i];
+			vec[j][i] = t;
+		}
+	}
+}
+
+void gda_float44_mul(float(*out)[4], float(*mat1)[4], float(*mat2)[4]){
+	int i, j;
+	float temp1[4][4], temp2[4][4];
+	if (mat1 == out) { gda__memcpy_4byte(temp1, mat1, sizeof(temp1)); mat1 = temp1; }
+	if (mat2 == out) { gda__memcpy_4byte(temp2, mat2, sizeof(temp2)); mat2 = temp2; }
+	for (j = 0; j < 4; j++) {
+		for (i = 0; i < 4; i++) {
+			out[j][i] = mat1[0][i] * mat2[j][0]
+				+ mat1[1][i] * mat2[j][1]
+				+ mat1[2][i] * mat2[j][2]
+				+ mat1[3][i] * mat2[j][3];
+		}
+	}
+}
+
+gdaVec4 gda_float44_mul_vec4(float m[4][4], gdaVec4 v1){
+	gdaVec4 r;
+	r.x = m[0][0] * v1.x + m[1][0] * v1.y + m[2][0] * v1.z + m[3][0] * v1.w;
+	r.y = m[0][1] * v1.x + m[1][1] * v1.y + m[2][1] * v1.z + m[3][1] * v1.w;
+	r.z = m[0][2] * v1.x + m[1][2] * v1.y + m[2][2] * v1.z + m[3][2] * v1.w;
+	r.w = m[0][3] * v1.x + m[1][3] * v1.y + m[2][3] * v1.z + m[3][3] * v1.w;
+	return(r);
+}
+
+/*Quaternions implementation*/
 gdaQuat gda_quat(float x, float y, float z, float w){ gdaQuat q; q.x = x; q.y = y; q.z = z; q.w = w; return(q); }
 gdaQuat gda_quat_from_array(float arr[4]){ gdaQuat q; q.x = arr[0]; q.y = arr[1]; q.z = arr[2]; q.w = arr[3]; return (q); }
 
@@ -628,31 +1081,29 @@ gdaVec3 gda_quat_rotate_vec3(gdaQuat q, gdaVec3 v){
 	return (gda_vec3_add(gda_vec3_add(gda_vec3_mul(t, q.w), v), p));
 }
 
-gdaMat4 gda_mat4_from_quat(gdaQuat q){
-	gdaMat4 r;
-	*(r.data + 1)  = 1.0 - 2 * q.y * q.y - 2 * q.z * q.z;
-	*(r.data + 2)  = 2 * q.x * q.y + 2 * q.z * q.w;
-	*(r.data + 3)  = 2 * q.x * q.z - 2 * q.y * q.w;
-	*(r.data + 4)  = 0.0f;
+void gda_mat4_from_quat(gdaMat4* out, gdaQuat q){
+	*(out->data + 1)  = 1.0 - 2 * q.y * q.y - 2 * q.z * q.z;
+	*(out->data + 2)  = 2 * q.x * q.y + 2 * q.z * q.w;
+	*(out->data + 3)  = 2 * q.x * q.z - 2 * q.y * q.w;
+	*(out->data + 4)  = 0.0f;
 					    
-	*(r.data + 4)  = 2 * q.x * q.y - 2 * q.z * q.w;
-	*(r.data + 5)  = 1.0 - 2 * q.x * q.x - 2 * q.z * q.z;
-	*(r.data + 6)  = 2 * q.y * q.z + 2 * q.x * q.w;
-	*(r.data + 7)  = 0.0f;
+	*(out->data + 4)  = 2 * q.x * q.y - 2 * q.z * q.w;
+	*(out->data + 5)  = 1.0 - 2 * q.x * q.x - 2 * q.z * q.z;
+	*(out->data + 6)  = 2 * q.y * q.z + 2 * q.x * q.w;
+	*(out->data + 7)  = 0.0f;
 					    
-	*(r.data + 8)  = 2 * q.x * q.z + 2 * q.y * q.w;
-	*(r.data + 9)  = 2 * q.y * q.z - 2 * q.x * q.w;
-	*(r.data + 10) = 1.0 - 2 * q.x * q.x - 2 * q.y * q.y;
-	*(r.data + 11) = 0.0f;
+	*(out->data + 8)  = 2 * q.x * q.z + 2 * q.y * q.w;
+	*(out->data + 9)  = 2 * q.y * q.z - 2 * q.x * q.w;
+	*(out->data + 10) = 1.0 - 2 * q.x * q.x - 2 * q.y * q.y;
+	*(out->data + 11) = 0.0f;
 
-	*(r.data + 12) = 0.0f;
-	*(r.data + 13) = 0.0f;
-	*(r.data + 14) = 0.0f;
-	*(r.data + 15) = 1.0f;
-	return(r);
+	*(out->data + 12) = 0.0f;
+	*(out->data + 13) = 0.0f;
+	*(out->data + 14) = 0.0f;
+	*(out->data + 15) = 1.0f;
 }
 
-gdaQuat gda_quat_from_mat4(gdaMat4 m){
+gdaQuat gda_quat_from_mat4(gdaMat4* m){
 	gdaQuat r;
 
 	gdaFloat4 *fm;
@@ -716,280 +1167,10 @@ gdaQuat gda_quat_from_mat4(gdaMat4 m){
 
 		}break;
 	}
-
 	return(r);
 }
 
 /*
-inline gdaVec2 gda_vec2(){
-	gdaVec2 res;
-	res.x = 0.0f;
-	res.y = 0.0f;
-	return res;
-}
-
-inline gdaVec2 gda_vec2(float x, float y){
-	gdaVec2 res;
-	res.x = 0.0f;
-	res.y = 0.0f;
-	return res;
-}
-
-inline gdaVec3 gda_vec3(){
-	gdaVec3 res;
-	res.x = 0.0f;
-	res.y = 0.0f;
-	res.z = 0.0f;
-	return res;
-}
-
-inline gdaVec3 gda_vec3(float value){
-	gdaVec3 res;
-	res.x = value;
-	res.y = value;
-	res.z = value;
-	return res;
-}
-
-inline gdaVec3 gda_vec3(float x, float y, float z){
-	gdaVec3 res;
-	res.x = x;
-	res.y = y;
-	res.z = z;
-	return res;
-}
-
-inline gdaVec4 gda_vec4(){
-	gdaVec4 res;
-	res.x = 0.0f;
-	res.y = 0.0f;
-	res.z = 0.0f;
-	res.w = 0.0f;
-	return res;
-}
-
-inline gdaVec4 gda_vec4(float x, float y, float z, float w){
-	gdaVec4 res;
-	res.x = x;
-	res.y = y;
-	res.z = z;
-	res.w = w;
-	return res;
-}
-
-inline gdaVec4 gda_vec4(gdaVec3 v, float w){
-	gdaVec4 res;
-	res.x = v.x;
-	res.y = v.y;
-	res.z = v.z;
-	res.w = w;
-}
-
-inline gdaQuat gda_quat(){
-	gdaQuat Result;
-	Result.x = 0.0f;
-	Result.y = 0.0f;
-	Result.z = 0.0f;
-	Result.w = 1.0f;
-	return(Result);
-}
-
-inline gdaQuat gda_quat(float x, float y, float z, float w){
-	gdaQuat res;
-	res.x = x;
-	res.y = y;
-	res.z = z;
-	res.w = w;
-	return res;
-}
-
-inline gdaMat4 gda_mat4(){
-	gdaMat4 Result = {};
-	return(Result);
-}
-
-inline gdaMat4 gda_mat4(float Value){
-	gdaMat4 Result = {};
-	*(Result.data + 0) = Value;
-	*(Result.data + 5) = Value;
-	*(Result.data + 10) = Value;
-	*(Result.data + 15) = Value;
-	return(Result);
-}
-
-//gdaVec2 OPERATIONS
-inline float Length(gdaVec2 vec){
-	return sqrtf(vec.x * vec.x + vec.y * vec.y);
-}
-
-inline gdaVec2 Normalize(gdaVec2 vec){
-	float len = Length(vec);
-	gdaVec2 res;
-	res.x = vec.x / len;
-	res.y = vec.y / len;
-	return res;
-}
-
-inline float DotProduct(gdaVec2 v1, gdaVec2 v2){
-	return (v1.x * v2.x + v1.y * v2.y);
-}
-
-//gdaVec3 OPERATIONS
-inline float Length(gdaVec3 vec){
-	return sqrtf(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
-}
-
-inline gdaVec3 Normalize(gdaVec3 vec){
-	float len = Length(vec);
-	gdaVec3 res;
-	res.x = vec.x / len;
-	res.y = vec.y / len;
-	res.z = vec.z / len;
-	return res;
-}
-
-inline float DotProduct(gdaVec3 v1, gdaVec3 v2){
-	return (v1.x * v2.x + v1.y * v2.y + v1.z * v2.z);
-}
-
-inline gdaVec3 CrossProduct(gdaVec3 p1, gdaVec3 p2){
-	gdaVec3 Result;
-
-	Result.x = p1.y * p2.z - p2.y * p1.z;
-	Result.y = p1.x * p2.z - p2.x * p1.z;
-	Result.z = p1.x * p2.y - p2.x * p1.y;
-
-	return(Result);
-}
-
-
-
-//gdaVec2 OPERATOR OVERLOADING
-inline gdaVec2 operator+(gdaVec2 v1, gdaVec2 v2){
-	return gda_vec2(v1.x + v2.x, v1.y + v2.y);
-}
-
-inline gdaVec2 operator-(gdaVec2 v1, gdaVec2 v2){
-	return gda_vec2(v1.x - v2.x, v1.y - v2.y);
-}
-
-inline gdaVec2 operator*(gdaVec2 v, float f){
-	return gda_vec2(v.x * f, v.y * f);
-}
-
-inline gdaVec2 operator/(gdaVec2 v, float f){
-	return gda_vec2(v.x / f, v.y / f);
-}
-
-inline gdaVec2& operator*=(gdaVec2& v, float Value){
-	v = v * Value;
-	return(v);
-}
-
-inline gdaVec2& operator/=(gdaVec2& v, float Value){
-	v = v / Value;
-	return(v);
-}
-
-//gdaVec3 OPERATOR OVERLOADING
-inline gdaVec3 operator+(gdaVec3 v1, gdaVec3 v2){
-	return gda_vec3(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
-}
-
-inline gdaVec3 operator-(gdaVec3 v1, gdaVec3 v2){
-	return gda_vec3(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
-}
-
-inline gdaVec3 operator*(gdaVec3 v, float f){
-	return gda_vec3(v.x * f, v.y * f, v.z * f);
-}
-
-inline gdaVec3 operator/(gdaVec3 v, float f){
-	return gda_vec3(v.x / f, v.y / f, v.z / f);
-}
-
-inline gdaVec3& operator*=(gdaVec3& v, float f){
-	v = v * f;
-	return(v);
-}
-
-inline gdaVec3& operator/=(gdaVec3& v, float f){
-	v = v / f;
-	return(v);
-}
-
-//gdaVec4 OPERATIONS
-inline float DotProduct(gdaVec4 v1, gdaVec4 v2){
-
-	float Result;
-
-#ifndef GDA_MATH_ALLOW_SIMD
-	Result = (v1.x * v2.x + v1.y * v2.y + v1.z * v2.z + v1.w * v2.w);
-#else
-	Result = (v1.x * v2.x + v1.y * v2.y + v1.z * v2.z + v1.w * v2.w);
-#endif
-
-	return(Result);
-}
-
-
-//gdaQuat OPERATIONS
-inline float Length(gdaQuat q) {
-	return sqrtf(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
-}
-
-inline gdaQuat NormalizegdaQuat(gdaQuat quat){
-	gdaQuat Result;
-
-	float length = Length(quat);
-	float x = quat.x / length;
-	float y = quat.y / length;
-	float z = quat.z / length;
-	float w = quat.w / length;
-
-	return(Result);
-}
-
-inline gdaQuat ConjugategdaQuat(gdaQuat quat){
-	return gda_quat(-quat.x, -quat.y, -quat.z, quat.w);
-}
-
-inline gdaQuat MultiplygdaQuatBygdaQuat(gdaQuat l, gdaQuat r){
-#if 0 
-	float w = l.w * r.w - l.x * r.x - l.y * r.y - l.z * r.z;
-	float x = l.x * r.w + l.w * r.x + l.y * r.z - l.z * r.y;
-	float y = l.y * r.w + l.w * r.y + l.z * r.x - l.x * r.z;
-	float z = l.z * r.w + l.w * r.z + l.x * r.y - l.y * r.x;
-
-#else
-	float w = l.w*r.w - l.x*r.x - l.y*r.y - l.z*r.z;
-	float x = l.w*r.x + l.x*r.w + l.y*r.z - l.z*r.y;
-	float y = l.w*r.y - l.x*r.z + l.y*r.w + l.z*r.x;
-	float z = l.w*r.z + l.x*r.y - l.y*r.x + l.z*r.w;
-#endif
-	return gda_quat(x, y, z, w);
-}
-
-inline gdaQuat MultiplygdaQuatByVector(gdaQuat q, gdaVec3 v){
-	gdaQuat Result;
-	Result.w = -q.x * v.x - q.y * v.y - q.z * v.z;
-	Result.x = q.w * v.x + q.y * v.z - q.z * v.y;
-	Result.y = q.w * v.y + q.z * v.x - q.x * v.z;
-	Result.z = q.w * v.z + q.x * v.y - q.y * v.x;
-	return(Result);
-}
-
-//MATRIX FUNCTIONS
-inline gdaMat4 TransposeMatrix(gdaMat4 mat){
-	gdaMat4 res;
-	for (int i = 0; i < 4; i++){
-		for (int j = 0; j < 4; j++){
-			*(res.data + j * 4 + i) = *(mat.data + i * 4 + j);
-		}
-	}
-}
-
-
 //Maybe make SIMD version of those two
 inline gdaMat4 MultiplyMatrices(gdaMat4 m1, gdaMat4 m2){
 	gdaMat4 Result = {};
@@ -1101,98 +1282,9 @@ inline gdaVec4 MultiplyMatrixBygdaVec4(gdaMat4 mat, gdaVec4 vec){
 	return(Result);
 }
 
-inline gdaMat4 RotationMatrix(gdaQuat qu){
-	gdaMat4 result;
-
-	*(result.data + 1)  = 1.0 - 2 * qu.y * qu.y - 2 * qu.z * qu.z;
-	*(result.data + 2)  = 2 * qu.x * qu.y + 2 * qu.z * qu.w;
-	*(result.data + 3)  = 2 * qu.x * qu.z - 2 * qu.y * qu.w;
-	*(result.data + 4)  = 0.0f;
-					    
-	*(result.data + 4)  = 2 * qu.x * qu.y - 2 * qu.z * qu.w;
-	*(result.data + 5)  = 1.0 - 2 * qu.x * qu.x - 2 * qu.z * qu.z;
-	*(result.data + 6)  = 2 * qu.y * qu.z + 2 * qu.x * qu.w;
-	*(result.data + 7)  = 0.0f;
-					    
-	*(result.data + 8)  = 2 * qu.x * qu.z + 2 * qu.y * qu.w;
-	*(result.data + 9)  = 2 * qu.y * qu.z - 2 * qu.x * qu.w;
-	*(result.data + 10) = 1.0 - 2 * qu.x * qu.x - 2 * qu.y * qu.y;
-	*(result.data + 11) = 0.0f;
-
-	*(result.data + 12) = 0.0f;
-	*(result.data + 13) = 0.0f;
-	*(result.data + 14) = 0.0f;
-	*(result.data + 15) = 1.0f;
-
-	return result;
-}
-
-inline gdaMat4 OrthograficProjectionMatrix(int Left, int Right, int Bottom, int Top){
-	gdaMat4 Result = {};
-	*(Result.data) = 2.0f / (Right - Left);
-	*(Result.data + 3) = (Right + Left) / (Right - Left);
-
-	*(Result.data + 5) = 2.0f / (Top - Bottom);
-	*(Result.data + 7) = (Top + Bottom) / (Top - Bottom);
-
-	*(Result.data + 10) = 1.0f;
-	*(Result.data + 15) = 1.0f;
-	return(Result);
-}
-
-inline gdaMat4 OrthograficProjectionMatrix(int Left, int Right, int Bottom, int Top, int Near, int Far){
-	gdaMat4 Result = {};
-
-	*(Result.data) = 2.0f / (Right - Left);
-	*(Result.data + 3) = (Right + Left) / (Right - Left);
-
-	*(Result.data + 5) = 2.0f / (Top - Bottom);
-	*(Result.data + 7) = (Top + Bottom) / (Top - Bottom);
-
-	*(Result.data + 10) = -2.0f / (Far - Near);
-	*(Result.data + 11) = (Far + Near) / (Far - Near);
-
-	*(Result.data + 15) = 1.0f;
-
-	return(Result);
-}
-
-inline gdaMat4 PerspectiveProjectionMatrix(int Left, int Right, int Bottom, int Top, int Near, int Far){
-	gdaMat4 Result;
-	*(Result.data + 1) = 2.0f * Near / (Right - Left);
-	*(Result.data + 2) = 0.0f;
-	*(Result.data + 3) = (Right + Left) / (Right - Left);
-	*(Result.data + 4) = 0.0f;
-
-	*(Result.data + 4) = 0.0f;
-	*(Result.data + 5) = 2 * Near / (Top - Bottom);
-	*(Result.data + 6) = (Top + Bottom) / (Top - Bottom);
-	*(Result.data + 7) = 0.0f;
-
-	*(Result.data + 8) = 0.0f;
-	*(Result.data + 9) = 0.0f;
-	*(Result.data + 10) = -1.0f * (Far + Near) / (Far - Near);
-	*(Result.data + 11) = -2.0f * Far * Near / (Far - Near);
-
-	*(Result.data + 12) = 0.0f;
-	*(Result.data + 13) = 0.0f;
-	*(Result.data + 14) = -1.0f;
-	*(Result.data + 15) = 0;
-	return(Result);
-}
-
-inline gdaMat4 operator *(gdaMat4 m1, gdaMat4 m2){
-	return MultiplyMatrices(m1, m2);
-}
-
-inline gdaVec4 operator*(gdaMat4 mat, gdaVec4 vec){
-	return MultiplyMatrixBygdaVec4(mat, vec);
-}
 */
 
-#endif
+#endif /*GDA_MATH_IMPLEMENTATION*/
 
 
 
-#define GDA_MATH_H
-#endif

@@ -119,6 +119,11 @@ typedef float gdaFloat4[4];
 #define GDA_MATH_CONSTANTS
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #ifndef gda_min
 #define gda_min(a, b) ((a) < (b) ? (a) : (b))
 #endif
@@ -151,185 +156,192 @@ typedef float gdaFloat4[4];
 #define gda_sign(x) ((x) >= 0 ? 1 : -1)
 #endif
 
-/*Math functions definitions*/
-GDA_MATH_DEF float gda_sqrt(float a);
-GDA_MATH_DEF float gda_rsqrt(float a);
 
-GDA_MATH_DEF float gda_sin(float a);
-GDA_MATH_DEF float gda_cos(float a);
-GDA_MATH_DEF float gda_tan(float a);
-GDA_MATH_DEF float gda_arcsin(float a);
-GDA_MATH_DEF float gda_arccos(float a);
-GDA_MATH_DEF float gda_arctan(float a);
-GDA_MATH_DEF float gda_arctan2(float y, float x);
+	/*Math functions definitions*/
+	GDA_MATH_DEF float gda_to_radians(float degrees);
+	GDA_MATH_DEF float gda_to_degrees(float radians);
+	
+	GDA_MATH_DEF float gda_sqrt(float a);
+	GDA_MATH_DEF float gda_rsqrt(float a);
 
-GDA_MATH_DEF float gda_exp(float x);
-GDA_MATH_DEF float gda_exp2(float x);
-GDA_MATH_DEF float gda_log(float x);
-GDA_MATH_DEF float gda_log2(float x);
-GDA_MATH_DEF float gda_pow(float x, float y); /*x ^ y*/
+	GDA_MATH_DEF float gda_sin(float a);
+	GDA_MATH_DEF float gda_cos(float a);
+	GDA_MATH_DEF float gda_tan(float a);
+	GDA_MATH_DEF float gda_arcsin(float a);
+	GDA_MATH_DEF float gda_arccos(float a);
+	GDA_MATH_DEF float gda_arctan(float a);
+	GDA_MATH_DEF float gda_arctan2(float y, float x);
 
-/*Vector definitions*/
-GDA_MATH_DEF gdaVec2 gda_vec2_zero(void);
-GDA_MATH_DEF gdaVec2 gda_vec2(float x, float y);
-GDA_MATH_DEF gdaVec2 gda_vec2_from_array(float arr[2]);
+	GDA_MATH_DEF float gda_exp(float x);
+	GDA_MATH_DEF float gda_exp2(float x);
+	GDA_MATH_DEF float gda_log(float x);
+	GDA_MATH_DEF float gda_log2(float x);
+	GDA_MATH_DEF float gda_pow(float x, float y); /*x ^ y*/
 
-GDA_MATH_DEF gdaVec3 gda_vec3_zero(void);
-GDA_MATH_DEF gdaVec3 gda_vec3(float x, float y, float z);
-GDA_MATH_DEF gdaVec3 gda_vec3_from_array(float arr[3]);
+	/*Vector definitions*/
+	GDA_MATH_DEF gdaVec2 gda_vec2_zero(void);
+	GDA_MATH_DEF gdaVec2 gda_vec2(float x, float y);
+	GDA_MATH_DEF gdaVec2 gda_vec2_from_array(float arr[2]);
 
-GDA_MATH_DEF gdaVec4 gda_vec4_zero(void);
-GDA_MATH_DEF gdaVec4 gda_vec4(float x, float y, float z, float w);
-GDA_MATH_DEF gdaVec4 gda_vec4_from_array(float arr[4]);
+	GDA_MATH_DEF gdaVec3 gda_vec3_zero(void);
+	GDA_MATH_DEF gdaVec3 gda_vec3(float x, float y, float z);
+	GDA_MATH_DEF gdaVec3 gda_vec3_from_array(float arr[3]);
 
-GDA_MATH_DEF gdaVec2 gda_vec2_add(gdaVec2 v0, gdaVec2 v1);
-GDA_MATH_DEF gdaVec2 gda_vec2_sub(gdaVec2 v0, gdaVec2 v1);
-GDA_MATH_DEF gdaVec2 gda_vec2_mul(gdaVec2 v, float s);
-GDA_MATH_DEF gdaVec2 gda_vec2_div(gdaVec2 v, float s);
+	GDA_MATH_DEF gdaVec4 gda_vec4_zero(void);
+	GDA_MATH_DEF gdaVec4 gda_vec4(float x, float y, float z, float w);
+	GDA_MATH_DEF gdaVec4 gda_vec4_from_array(float arr[4]);
 
-GDA_MATH_DEF gdaVec3 gda_vec3_add(gdaVec3 v0, gdaVec3 v1);
-GDA_MATH_DEF gdaVec3 gda_vec3_sub(gdaVec3 v0, gdaVec3 v1);
-GDA_MATH_DEF gdaVec3 gda_vec3_mul(gdaVec3 v, float s);
-GDA_MATH_DEF gdaVec3 gda_vec3_div(gdaVec3 v, float s);
+	GDA_MATH_DEF gdaVec2 gda_vec2_add(gdaVec2 v0, gdaVec2 v1);
+	GDA_MATH_DEF gdaVec2 gda_vec2_sub(gdaVec2 v0, gdaVec2 v1);
+	GDA_MATH_DEF gdaVec2 gda_vec2_mul(gdaVec2 v, float s);
+	GDA_MATH_DEF gdaVec2 gda_vec2_div(gdaVec2 v, float s);
 
-GDA_MATH_DEF gdaVec4 gda_vec4_add(gdaVec4 v0, gdaVec4 v1);
-GDA_MATH_DEF gdaVec4 gda_vec4_sub(gdaVec4 v0, gdaVec4 v1);
-GDA_MATH_DEF gdaVec4 gda_vec4_mul(gdaVec4 v, float s);
-GDA_MATH_DEF gdaVec4 gda_vec4_div(gdaVec4 v, float s);
+	GDA_MATH_DEF gdaVec3 gda_vec3_add(gdaVec3 v0, gdaVec3 v1);
+	GDA_MATH_DEF gdaVec3 gda_vec3_sub(gdaVec3 v0, gdaVec3 v1);
+	GDA_MATH_DEF gdaVec3 gda_vec3_mul(gdaVec3 v, float s);
+	GDA_MATH_DEF gdaVec3 gda_vec3_div(gdaVec3 v, float s);
 
-GDA_MATH_DEF float gda_vec2_dot(gdaVec2 v0, gdaVec2 v1);
-GDA_MATH_DEF float gda_vec3_dot(gdaVec3 v0, gdaVec3 v1);
-GDA_MATH_DEF float gda_vec4_dot(gdaVec4 v0, gdaVec4 v1);
+	GDA_MATH_DEF gdaVec4 gda_vec4_add(gdaVec4 v0, gdaVec4 v1);
+	GDA_MATH_DEF gdaVec4 gda_vec4_sub(gdaVec4 v0, gdaVec4 v1);
+	GDA_MATH_DEF gdaVec4 gda_vec4_mul(gdaVec4 v, float s);
+	GDA_MATH_DEF gdaVec4 gda_vec4_div(gdaVec4 v, float s);
 
-GDA_MATH_DEF float gda_vec2_cross(gdaVec2 v0, gdaVec2 v1);
-GDA_MATH_DEF gdaVec3 gda_vec3_cross(gdaVec3 v0, gdaVec3 v1);
+	GDA_MATH_DEF float gda_vec2_dot(gdaVec2 v0, gdaVec2 v1);
+	GDA_MATH_DEF float gda_vec3_dot(gdaVec3 v0, gdaVec3 v1);
+	GDA_MATH_DEF float gda_vec4_dot(gdaVec4 v0, gdaVec4 v1);
 
-GDA_MATH_DEF float gda_vec2_mag(gdaVec2 v);
-GDA_MATH_DEF float gda_vec3_mag(gdaVec3 v);
-GDA_MATH_DEF float gda_vec4_mag(gdaVec4 v);
+	GDA_MATH_DEF float gda_vec2_cross(gdaVec2 v0, gdaVec2 v1);
+	GDA_MATH_DEF gdaVec3 gda_vec3_cross(gdaVec3 v0, gdaVec3 v1);
 
-GDA_MATH_DEF float gda_vec2_squared_mag(gdaVec2 v);
-GDA_MATH_DEF float gda_vec3_squared_mag(gdaVec3 v);
-GDA_MATH_DEF float gda_vec4_squared_mag(gdaVec4 v);
+	GDA_MATH_DEF float gda_vec2_mag(gdaVec2 v);
+	GDA_MATH_DEF float gda_vec3_mag(gdaVec3 v);
+	GDA_MATH_DEF float gda_vec4_mag(gdaVec4 v);
 
-GDA_MATH_DEF gdaVec2 gda_vec2_norm(gdaVec2 v);
-GDA_MATH_DEF gdaVec3 gda_vec3_norm(gdaVec3 v);
-GDA_MATH_DEF gdaVec4 gda_vec4_norm(gdaVec4 v);
+	GDA_MATH_DEF float gda_vec2_squared_mag(gdaVec2 v);
+	GDA_MATH_DEF float gda_vec3_squared_mag(gdaVec3 v);
+	GDA_MATH_DEF float gda_vec4_squared_mag(gdaVec4 v);
 
-GDA_MATH_DEF gdaVec2 gda_vec2_norm0(gdaVec2 v);
-GDA_MATH_DEF gdaVec3 gda_vec3_norm0(gdaVec3 v);
-GDA_MATH_DEF gdaVec4 gda_vec4_norm0(gdaVec4 v);
+	GDA_MATH_DEF gdaVec2 gda_vec2_norm(gdaVec2 v);
+	GDA_MATH_DEF gdaVec3 gda_vec3_norm(gdaVec3 v);
+	GDA_MATH_DEF gdaVec4 gda_vec4_norm(gdaVec4 v);
 
-GDA_MATH_DEF gdaVec2 gda_vec2_reflect(gdaVec2 i, gdaVec2 n);
-GDA_MATH_DEF gdaVec3 gda_vec3_reflect(gdaVec3 i, gdaVec3 n);
-GDA_MATH_DEF gdaVec2 gda_vec2_refract(gdaVec2 i, gdaVec2 n, float theta);
-GDA_MATH_DEF gdaVec3 gda_vec3_refract(gdaVec3 i, gdaVec3 n, float theta);
+	GDA_MATH_DEF gdaVec2 gda_vec2_norm0(gdaVec2 v);
+	GDA_MATH_DEF gdaVec3 gda_vec3_norm0(gdaVec3 v);
+	GDA_MATH_DEF gdaVec4 gda_vec4_norm0(gdaVec4 v);
 
-GDA_MATH_DEF float gda_vec2_aspect_ratio(gdaVec2 v);
+	GDA_MATH_DEF gdaVec2 gda_vec2_reflect(gdaVec2 i, gdaVec2 n);
+	GDA_MATH_DEF gdaVec3 gda_vec3_reflect(gdaVec3 i, gdaVec3 n);
+	GDA_MATH_DEF gdaVec2 gda_vec2_refract(gdaVec2 i, gdaVec2 n, float theta);
+	GDA_MATH_DEF gdaVec3 gda_vec3_refract(gdaVec3 i, gdaVec3 n, float theta);
 
-/*Matrix definitions*/
-GDA_MATH_DEF void gda_mat2_identity(gdaMat2* m);
-GDA_MATH_DEF void gda_mat2_transpose(gdaMat2* m);
-GDA_MATH_DEF void gda_mat2_mul(gdaMat2* out, gdaMat2* m1, gdaMat2* m2);
-GDA_MATH_DEF gdaVec2 gda_mat2_mul_vec2(gdaMat2* m, gdaVec2 v);
-GDA_MATH_DEF void gda_mat2_inverse(gdaMat2* out, gdaMat2* m);
-GDA_MATH_DEF float gda_mat2_determinant(gdaMat2* m);
+	GDA_MATH_DEF float gda_vec2_aspect_ratio(gdaVec2 v);
 
-GDA_MATH_DEF void gda_mat3_identity(gdaMat3* m);
-GDA_MATH_DEF void gda_mat3_transpose(gdaMat3* m);
-GDA_MATH_DEF void gda_mat3_mul(gdaMat3* out, gdaMat3* m1, gdaMat3* m2);
-GDA_MATH_DEF gdaVec3 gda_mat3_mul_vec3(gdaMat3* m, gdaVec3 v);
-GDA_MATH_DEF void gda_mat3_inverse(gdaMat3* out, gdaMat3* m);
-GDA_MATH_DEF float gda_mat3_determinant(gdaMat3* m);
+	/*Matrix definitions*/
+	GDA_MATH_DEF void gda_mat2_identity(gdaMat2* m);
+	GDA_MATH_DEF void gda_mat2_transpose(gdaMat2* m);
+	GDA_MATH_DEF void gda_mat2_mul(gdaMat2* out, gdaMat2* m1, gdaMat2* m2);
+	GDA_MATH_DEF gdaVec2 gda_mat2_mul_vec2(gdaMat2* m, gdaVec2 v);
+	GDA_MATH_DEF void gda_mat2_inverse(gdaMat2* out, gdaMat2* m);
+	GDA_MATH_DEF float gda_mat2_determinant(gdaMat2* m);
 
-GDA_MATH_DEF void gda_mat4_identity(gdaMat4* m);
-GDA_MATH_DEF void gda_mat4_transpose(gdaMat4* m);
-GDA_MATH_DEF void gda_mat4_mul(gdaMat4* out, gdaMat4* m1, gdaMat4* m2);
-GDA_MATH_DEF gdaVec4 gda_mat4_mul_vec4(gdaMat4* m, gdaVec4 v);
-GDA_MATH_DEF void gda_mat4_inverse(gdaMat4* out, gdaMat4* in);
+	GDA_MATH_DEF void gda_mat3_identity(gdaMat3* m);
+	GDA_MATH_DEF void gda_mat3_transpose(gdaMat3* m);
+	GDA_MATH_DEF void gda_mat3_mul(gdaMat3* out, gdaMat3* m1, gdaMat3* m2);
+	GDA_MATH_DEF gdaVec3 gda_mat3_mul_vec3(gdaMat3* m, gdaVec3 v);
+	GDA_MATH_DEF void gda_mat3_inverse(gdaMat3* out, gdaMat3* m);
+	GDA_MATH_DEF float gda_mat3_determinant(gdaMat3* m);
 
-GDA_MATH_DEF void gda_mat4_translate(gdaMat4* out, gdaVec3 v);
-GDA_MATH_DEF void gda_mat4_rotate(gdaMat4* out, gdaVec3 v, float angle_radians);
-GDA_MATH_DEF void gda_mat4_scale(gdaMat4* out, gdaVec3 v);
-GDA_MATH_DEF void gda_mat4_scalef(gdaMat4* out, float s);
-GDA_MATH_DEF void gda_mat4_ortho2d(gdaMat4* out, float left, float right, float bottom, float top);
-GDA_MATH_DEF void gda_mat4_ortho3d(gdaMat4* out, float left, float right, float bottom, float top, float z_near, float z_far);
-GDA_MATH_DEF void gda_mat4_perspective(gdaMat4* out, float fovy, float aspect, float z_near, float z_far);
-GDA_MATH_DEF void gda_mat4_infinite_perspective(gdaMat4* out, float fovy, float aspect, float z_near);
+	GDA_MATH_DEF void gda_mat4_identity(gdaMat4* m);
+	GDA_MATH_DEF void gda_mat4_transpose(gdaMat4* m);
+	GDA_MATH_DEF void gda_mat4_mul(gdaMat4* out, gdaMat4* m1, gdaMat4* m2);
+	GDA_MATH_DEF gdaVec4 gda_mat4_mul_vec4(gdaMat4* m, gdaVec4 v);
+	GDA_MATH_DEF void gda_mat4_inverse(gdaMat4* out, gdaMat4* in);
 
-GDA_MATH_DEF gdaMat4 gda_mat4_look_at(gdaVec3 eye, gdaVec3 centre, gdaVec3 up);
+	GDA_MATH_DEF void gda_mat4_translate(gdaMat4* out, gdaVec3 v);
+	GDA_MATH_DEF void gda_mat4_rotate(gdaMat4* out, gdaVec3 v, float angle_radians);
+	GDA_MATH_DEF void gda_mat4_scale(gdaMat4* out, gdaVec3 v);
+	GDA_MATH_DEF void gda_mat4_scalef(gdaMat4* out, float s);
+	GDA_MATH_DEF void gda_mat4_ortho2d(gdaMat4* out, float left, float right, float bottom, float top);
+	GDA_MATH_DEF void gda_mat4_ortho3d(gdaMat4* out, float left, float right, float bottom, float top, float z_near, float z_far);
+	GDA_MATH_DEF void gda_mat4_perspective(gdaMat4* out, float fovy, float aspect, float z_near, float z_far);
+	GDA_MATH_DEF void gda_mat4_infinite_perspective(gdaMat4* out, float fovy, float aspect, float z_near);
 
-GDA_MATH_DEF void gda_float22_identity(float m[2][2]);
-GDA_MATH_DEF gdaFloat2* gda_float22_m(gdaMat2* m);
-GDA_MATH_DEF gdaFloat2* gda_float22_v(gdaVec2 m[2]);
-GDA_MATH_DEF gdaFloat2* gda_float22_4(float m[4]);
-GDA_MATH_DEF void gda_float22_transpose(float(*vec)[2]);
-GDA_MATH_DEF void gda_float22_mul(float(*out)[2], float(*mat1)[2], float(*mat2)[2]);
-GDA_MATH_DEF gdaVec2 gda_float22_mul_vec2(float m[2][2], gdaVec2 v1);
+	GDA_MATH_DEF gdaMat4 gda_mat4_look_at(gdaVec3 eye, gdaVec3 centre, gdaVec3 up);
 
-GDA_MATH_DEF void gda_float33_identity(float m[3][3]);
-GDA_MATH_DEF gdaFloat3* gda_float33_m(gdaMat3* m);
-GDA_MATH_DEF gdaFloat3* gda_float33_v(gdaVec3 m[3]);
-GDA_MATH_DEF gdaFloat3* gda_float33_9(float m[9]);
-GDA_MATH_DEF void gda_float33_transpose(float(*vec)[3]);
-GDA_MATH_DEF void gda_float33_mul(float(*out)[3], float(*mat1)[3], float(*mat2)[3]);
-GDA_MATH_DEF gdaVec3 gda_float33_mul_vec3(float m[3][3], gdaVec3 v1);
+	GDA_MATH_DEF void gda_float22_identity(float m[2][2]);
+	GDA_MATH_DEF gdaFloat2* gda_float22_m(gdaMat2* m);
+	GDA_MATH_DEF gdaFloat2* gda_float22_v(gdaVec2 m[2]);
+	GDA_MATH_DEF gdaFloat2* gda_float22_4(float m[4]);
+	GDA_MATH_DEF void gda_float22_transpose(float(*vec)[2]);
+	GDA_MATH_DEF void gda_float22_mul(float(*out)[2], float(*mat1)[2], float(*mat2)[2]);
+	GDA_MATH_DEF gdaVec2 gda_float22_mul_vec2(float m[2][2], gdaVec2 v1);
 
-GDA_MATH_DEF void gda_float44_identity(float m[4][4]);
-GDA_MATH_DEF gdaFloat4* gda_float44_m(gdaMat4* m);
-GDA_MATH_DEF gdaFloat4* gda_float44_v(gdaVec4 m[4]);
-GDA_MATH_DEF gdaFloat4* gda_float44_16(float m[16]);
-GDA_MATH_DEF void gda_float44_transpose(float(*vec)[4]);
-GDA_MATH_DEF void gda_float44_mul(float(*out)[4], float(*mat1)[4], float(*mat2)[4]);
-GDA_MATH_DEF gdaVec4 gda_float44_mul_vec4(float m[4][4], gdaVec4 v1);
+	GDA_MATH_DEF void gda_float33_identity(float m[3][3]);
+	GDA_MATH_DEF gdaFloat3* gda_float33_m(gdaMat3* m);
+	GDA_MATH_DEF gdaFloat3* gda_float33_v(gdaVec3 m[3]);
+	GDA_MATH_DEF gdaFloat3* gda_float33_9(float m[9]);
+	GDA_MATH_DEF void gda_float33_transpose(float(*vec)[3]);
+	GDA_MATH_DEF void gda_float33_mul(float(*out)[3], float(*mat1)[3], float(*mat2)[3]);
+	GDA_MATH_DEF gdaVec3 gda_float33_mul_vec3(float m[3][3], gdaVec3 v1);
 
-/*Quaternions definitions*/
-GDA_MATH_DEF gdaQuat gda_quat(float x, float y, float z, float w);
-GDA_MATH_DEF gdaQuat gda_quat_from_array(float arr[4]);
-GDA_MATH_DEF gdaQuat gda_quat_from_angle(gdaVec3 axis, float angle_radians);
-GDA_MATH_DEF gdaQuat gda_quat_from_euler_angles(float pitch, float yaw, float roll);
-GDA_MATH_DEF gdaQuat gda_quat_identity(void);
+	GDA_MATH_DEF void gda_float44_identity(float m[4][4]);
+	GDA_MATH_DEF gdaFloat4* gda_float44_m(gdaMat4* m);
+	GDA_MATH_DEF gdaFloat4* gda_float44_v(gdaVec4 m[4]);
+	GDA_MATH_DEF gdaFloat4* gda_float44_16(float m[16]);
+	GDA_MATH_DEF void gda_float44_transpose(float(*vec)[4]);
+	GDA_MATH_DEF void gda_float44_mul(float(*out)[4], float(*mat1)[4], float(*mat2)[4]);
+	GDA_MATH_DEF gdaVec4 gda_float44_mul_vec4(float m[4][4], gdaVec4 v1);
 
-GDA_MATH_DEF gdaQuat gda_quat_add(gdaQuat q1, gdaQuat q2);
-GDA_MATH_DEF gdaQuat gda_quat_sub(gdaQuat q1, gdaQuat q2);
-GDA_MATH_DEF gdaQuat gda_quat_mul(gdaQuat q1, gdaQuat q2);
-GDA_MATH_DEF gdaQuat gda_quat_div(gdaQuat q1, gdaQuat q2);
+	/*Quaternions definitions*/
+	GDA_MATH_DEF gdaQuat gda_quat(float x, float y, float z, float w);
+	GDA_MATH_DEF gdaQuat gda_quat_from_array(float arr[4]);
+	GDA_MATH_DEF gdaQuat gda_quat_from_angle(gdaVec3 axis, float angle_radians);
+	GDA_MATH_DEF gdaQuat gda_quat_from_euler_angles(float pitch, float yaw, float roll);
+	GDA_MATH_DEF gdaQuat gda_quat_identity(void);
 
-GDA_MATH_DEF gdaQuat gda_quat_mulf(gdaQuat q, float s);
-GDA_MATH_DEF gdaQuat gda_quat_divf(gdaQuat q, float s);
+	GDA_MATH_DEF gdaQuat gda_quat_add(gdaQuat q1, gdaQuat q2);
+	GDA_MATH_DEF gdaQuat gda_quat_sub(gdaQuat q1, gdaQuat q2);
+	GDA_MATH_DEF gdaQuat gda_quat_mul(gdaQuat q1, gdaQuat q2);
+	GDA_MATH_DEF gdaQuat gda_quat_div(gdaQuat q1, gdaQuat q2);
 
-GDA_MATH_DEF float gda_quat_dot(gdaQuat q1, gdaQuat q2);
-GDA_MATH_DEF float gda_quat_mag(gdaQuat q);
+	GDA_MATH_DEF gdaQuat gda_quat_mulf(gdaQuat q, float s);
+	GDA_MATH_DEF gdaQuat gda_quat_divf(gdaQuat q, float s);
 
-GDA_MATH_DEF gdaQuat gda_quat_norm(gdaQuat q);
-GDA_MATH_DEF gdaQuat gda_quat_conj(gdaQuat q);
-GDA_MATH_DEF gdaQuat gda_quat_inverse(gdaQuat q);
+	GDA_MATH_DEF float gda_quat_dot(gdaQuat q1, gdaQuat q2);
+	GDA_MATH_DEF float gda_quat_mag(gdaQuat q);
 
-GDA_MATH_DEF gdaVec3 gda_quat_axis(gdaQuat q);
-GDA_MATH_DEF float gda_quat_angle(gdaQuat q);
+	GDA_MATH_DEF gdaQuat gda_quat_norm(gdaQuat q);
+	GDA_MATH_DEF gdaQuat gda_quat_conj(gdaQuat q);
+	GDA_MATH_DEF gdaQuat gda_quat_inverse(gdaQuat q);
 
-GDA_MATH_DEF gdaVec3 gda_quat_rotate_vec3(gdaQuat q, gdaVec3 v);
-GDA_MATH_DEF void gda_mat4_from_quat(gdaMat4* out, gdaQuat q);
-GDA_MATH_DEF gdaQuat gda_quat_from_mat4(gdaMat4* m);
+	GDA_MATH_DEF gdaVec3 gda_quat_axis(gdaQuat q);
+	GDA_MATH_DEF float gda_quat_angle(gdaQuat q);
 
-/*Interpolations definitions*/
-GDA_MATH_DEF float gda_lerp(float a, float b, float t);
-GDA_MATH_DEF float gda_unlerp(float a, float b, float t);
-GDA_MATH_DEF float gda_smooth_step(float a, float b, float t);
-GDA_MATH_DEF float gda_smoother_step(float a, float b, float t);
+	GDA_MATH_DEF gdaVec3 gda_quat_rotate_vec3(gdaQuat q, gdaVec3 v);
+	GDA_MATH_DEF void gda_mat4_from_quat(gdaMat4* out, gdaQuat q);
+	GDA_MATH_DEF gdaQuat gda_quat_from_mat4(gdaMat4* m);
 
-GDA_MATH_DEF gdaVec2 gda_vec2_lerp(gdaVec2 a, gdaVec2 b, float t);
-GDA_MATH_DEF gdaVec3 gda_vec3_lerp(gdaVec3 a, gdaVec3 b, float t);
-GDA_MATH_DEF gdaVec4 gda_vec4_lerp(gdaVec4 a, gdaVec4 b, float t);
+	/*Interpolations definitions*/
+	GDA_MATH_DEF float gda_lerp(float a, float b, float t);
+	GDA_MATH_DEF float gda_unlerp(float a, float b, float t);
+	GDA_MATH_DEF float gda_smooth_step(float a, float b, float t);
+	GDA_MATH_DEF float gda_smoother_step(float a, float b, float t);
 
-GDA_MATH_DEF gdaQuat gda_quat_lerp(gdaQuat a, gdaQuat b, float t);
-GDA_MATH_DEF gdaQuat gda_quat_nlerp(gdaQuat a, gdaQuat b, float t);
-GDA_MATH_DEF gdaQuat gda_quat_slerp(gdaQuat a, gdaQuat b, float t);
-GDA_MATH_DEF gdaQuat gda_quat_nquad(gdaQuat p, gdaQuat a, gdaQuat b, gdaQuat q, float t);
-GDA_MATH_DEF gdaQuat gda_quat_squad(gdaQuat p, gdaQuat a, gdaQuat b, gdaQuat q, float t);
-GDA_MATH_DEF gdaQuat gda_quat_slerp_approx(gdaQuat a, gdaQuat b, float t);
-GDA_MATH_DEF gdaQuat gda_quat_squad_approx(gdaQuat p, gdaQuat a, gdaQuat b, gdaQuat q, float t);
+	GDA_MATH_DEF gdaVec2 gda_vec2_lerp(gdaVec2 a, gdaVec2 b, float t);
+	GDA_MATH_DEF gdaVec3 gda_vec3_lerp(gdaVec3 a, gdaVec3 b, float t);
+	GDA_MATH_DEF gdaVec4 gda_vec4_lerp(gdaVec4 a, gdaVec4 b, float t);
 
+	GDA_MATH_DEF gdaQuat gda_quat_lerp(gdaQuat a, gdaQuat b, float t);
+	GDA_MATH_DEF gdaQuat gda_quat_nlerp(gdaQuat a, gdaQuat b, float t);
+	GDA_MATH_DEF gdaQuat gda_quat_slerp(gdaQuat a, gdaQuat b, float t);
+	GDA_MATH_DEF gdaQuat gda_quat_nquad(gdaQuat p, gdaQuat a, gdaQuat b, gdaQuat q, float t);
+	GDA_MATH_DEF gdaQuat gda_quat_squad(gdaQuat p, gdaQuat a, gdaQuat b, gdaQuat q, float t);
+	GDA_MATH_DEF gdaQuat gda_quat_slerp_approx(gdaQuat a, gdaQuat b, float t);
+	GDA_MATH_DEF gdaQuat gda_quat_squad_approx(gdaQuat p, gdaQuat a, gdaQuat b, gdaQuat q, float t);
+
+#ifdef __cplusplus
+}
+#endif
 
 #define GDA_MATH_H
 #endif

@@ -78,6 +78,9 @@ GDA_ALGO_DEF s32 gda_gcd_s32(s32 a, s32 b);
 GDA_ALGO_DEF u32 gda_gcd_u32(u32 a, u32 b);
 GDA_ALGO_DEF s64 gda_gcd_s64(s64 a, s64 b);
 GDA_ALGO_DEF u64 gda_gcd_u64(u64 a, u64 b);
+
+
+
 #define GDA_ALGO_H
 #endif
 
@@ -97,7 +100,8 @@ s32 gda_gcd_s32(s32 a, s32 b){GDA_GCD_DEF(s32, a, b)}
 u32 gda_gcd_u32(u32 a, u32 b){GDA_GCD_DEF(u32, a, b)}
 s64 gda_gcd_s64(s64 a, s64 b){GDA_GCD_DEF(s64, a, b)}
 u64 gda_gcd_u64(u64 a, u64 b){GDA_GCD_DEF(u64, a, b)}
-
 #undef GDA_GCD_DEF
+
+
 
 #endif

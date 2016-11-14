@@ -23,64 +23,56 @@
 #pragma warning(dasable:4201)
 #endif
 
-struct gdaVec2{
-	union{
-		struct{
-			float x, y;
-		};
-		float data[2];
+typedef union gdaVec2{
+	struct{
+		float x, y;
 	};
+	float data[2];
 };
 
-struct gdaVec3{
-	union{
-		struct{
-			float x, y, z;
-		};
-		struct{
-			float r, g, b;
-		};
-		float data[3];
+typedef union gdaVec3{
+	struct{
+		float x, y, z;
 	};
-};
+	struct{
+		float r, g, b;
+	};
+	float data[3];
+} gdaVec3;
 
-struct gdaVec4{
-	union{
-		struct{ float x, y, z, w;};
-		struct{ gdaVec3 xyz; float w; };
-		struct{ gdaVec3 rgb; float a; };
-		struct{ gdaVec2 xy; gdaVec2 zw; };
-		float data[4];
-	};
-};
+typedef union gdaVec4{
+	struct{ float x, y, z, w;};
+	struct{ gdaVec3 xyz; float w; };
+	struct{ gdaVec3 rgb; float a; };
+	struct{ gdaVec2 xy; gdaVec2 zw; };
+	float data[4];
+} gdaVec4;
 
 typedef union gdaMat2{
 	struct{ gdaVec2 x, y; };
 	gdaVec2 row[2];
 	float data[4];
-};
+} gdaMat2;
 
 typedef union gdaMat3{
 	struct{ gdaVec3 x, y, z; };
 	gdaVec3 row[3];
 	float data[9];
-};
+} gdaMat3;
 
 typedef union gdaMat4{
 	struct{ gdaVec4 x, y, z, w; };
 	gdaVec4 row[4];
 	float data[16];
-};
+} gdaMat4;
 
-struct gdaQuat{
-	union{
-		struct {
-			float x, y, z, w;
-		};
-		gdaVec3 xyz;
-		gdaVec4 xyzw;
+typedef union gdaQuat{
+	struct {
+		float x, y, z, w;
 	};
-};
+	gdaVec3 xyz;
+	gdaVec4 xyzw;
+} gdaQuat;
 
 typedef float gdaFloat2[2];
 typedef float gdaFloat3[3];
@@ -1179,6 +1171,81 @@ gdaQuat gda_quat_from_mat4(gdaMat4* m){
 
 		}break;
 	}
+	return(r);
+}
+
+float gda_lerp(float a, float b, float t){ return(a * (1.0f - t) + b * t); }
+float gda_unlerp(float a, float b, float t){ return((t - a) / (b - a)); }
+float gda_smooth_step(float a, float b, float t){ float x = (t - a) / (b - a); return(x * x * (3.0f - 2.0f * x)); }
+float gda_smoother_step(float a, float b, float t){ float x = (t - a) / (b - a); return(x * x * x * (x * (6.0f * x - 15.0f) + 10.0f)); }
+
+#define GDA_VEC_LERPN(N, a, b, t) \
+	gdaVec##N r = gda_vec##N##_sub(b, a); \
+	r = gda_vec##N##_mul(r, t); \
+	r = gda_vec##N##_add(r, a); \
+	return(r);
+gdaVec2 gda_vec2_lerp(gdaVec2 a, gdaVec2 b, float t){ GDA_VEC_LERPN(2, a, b, t); }
+gdaVec3 gda_vec3_lerp(gdaVec3 a, gdaVec3 b, float t){ GDA_VEC_LERPN(3, a, b, t); }
+gdaVec4 gda_vec4_lerp(gdaVec4 a, gdaVec4 b, float t){ GDA_VEC_LERPN(4, a, b, t); }
+#undef GDA_VEC_LERPN
+
+gdaQuat gda_quat_lerp(gdaQuat a, gdaQuat b, float t){ gdaQuat q; q.xyzw = gda_vec4_lerp(a.xyzw, b.xyzw, t); return(q); }
+gdaQuat gda_quat_nlerp(gdaQuat a, gdaQuat b, float t){ gdaQuat q = gda_quat_norm(gda_quat_lerp(a, b, t)); return(q); }
+
+gdaQuat gda_quat_slerp(gdaQuat a, gdaQuat b, float t){
+	gdaQuat r;
+	gdaQuat x, y, z;
+	float cos_theta, angle;
+	float s1, s0, is;
+
+	z = b;
+	cos_theta = gda_quat_dot(a, b);
+
+	if (cos_theta < 0.0f){
+		z = gda_quat(-b.x, -b.y, -b.z, -b.w);
+		cos_theta = -cos_theta;
+	}
+
+	if (cos_theta > 1.0f){
+		r = gda_quat_lerp(a, b, t);
+	}
+
+	angle = gda_arccos(cos_theta);
+	s1 = gda_sin(1.0f - t * angle);;
+	s0 = gda_sin(t * angle);
+	is = 1.0f / gda_sin(angle);
+	x = gda_quat_mulf(z, s1);
+	y = gda_quat_mulf(z, s0);
+	r = gda_quat_mulf(gda_quat_add(x, y), is);
+	return(r);
+}
+
+gdaQuat gda_quat_slerp_approx(gdaQuat a, gdaQuat b, float t){
+	float tp = t + (1.0f - gda_quat_dot(a, b)) / 3.0f * t * (-2.0f * t * t + 3.0f * t - 1.0f);
+	return(gda_quat_nlerp(a, b, tp));
+}
+
+gdaQuat gda_quat_nquad(gdaQuat p, gdaQuat a, gdaQuat b, gdaQuat q, float t){
+	gdaQuat x, y, r;
+	x = gda_quat_nlerp(p, q, t);
+	y = gda_quat_nlerp(a, b, t);
+	r = gda_quat_nlerp(x, y, 2.0f * t * (1.0f - t));
+	return(r);
+}
+
+gdaQuat gda_quat_squad(gdaQuat p, gdaQuat a, gdaQuat b, gdaQuat q, float t){
+	gdaQuat x, y, r;
+	x = gda_quat_slerp(p, q, t);
+	y = gda_quat_slerp(a, b, t);
+	r = gda_quat_slerp(x, y, 2.0f * t * (1.0f - t));
+	return(r);
+}
+
+gdaQuat gda_quat_squad_approx(gdaQuat p, gdaQuat a, gdaQuat b, gdaQuat q, float t){
+	gdaQuat x, y, r;
+	x = gda_quat_slerp_approx(p, q, t);
+	y = gda_quat_slerp_approx(a, b, t);
+	r = gda_quat_slerp_approx(x, y, 2.0f * t * (1.0f - t));
 	return(r);
 }
 

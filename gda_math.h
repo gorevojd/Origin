@@ -23,6 +23,8 @@
 #pragma warning(dasable:4201)
 #endif
 
+
+
 typedef union gdaVec2{
 	struct{
 		float x, y;
@@ -309,6 +311,10 @@ extern "C" {
 	GDA_MATH_DEF gdaVec3 gda_quat_axis(gdaQuat q);
 	GDA_MATH_DEF float gda_quat_angle(gdaQuat q);
 
+	GDA_MATH_DEF float gda_quat_roll(gdaQuat q);
+	GDA_MATH_DEF float gda_quat_pitch(gdaQuat q);
+	GDA_MATH_DEF float gda_quat_yaw(gdaQuat q);
+
 	GDA_MATH_DEF gdaVec3 gda_quat_rotate_vec3(gdaQuat q, gdaVec3 v);
 	GDA_MATH_DEF void gda_mat4_from_quat(gdaMat4* out, gdaQuat q);
 	GDA_MATH_DEF gdaQuat gda_quat_from_mat4(gdaMat4* m);
@@ -333,6 +339,74 @@ extern "C" {
 
 #ifdef __cplusplus
 }
+#endif
+
+#ifdef __cplusplus
+/*gdaVec2 operator overloading*/
+inline bool operator==(gdaVec2 a, gdaVec2 b) { return((a.x == b.x) && (a.y == b.y)); }
+inline bool operator!=(gdaVec2 a, gdaVec2 b){ return((a.x != b.x) || (a.y != b.y)); }
+
+inline gdaVec2 operator+(gdaVec2 a){ return(a); }
+inline gdaVec2 operator-(gdaVec2 a){ gdaVec2 r = { -a.x, -a.y }; return(r); }
+
+inline gdaVec2 operator+(gdaVec2 a, gdaVec2 b){ return gda_vec2_add(a, b); }
+inline gdaVec2 operator-(gdaVec2 a, gdaVec2 b){ return gda_vec2_sub(a, b); }
+
+inline gdaVec2 operator*(gdaVec2 a, float s){ return gda_vec2_mul(a, s); }
+inline gdaVec2 operator*(float s, gdaVec2 a){ return gda_vec2_mul(a, s); }
+inline gdaVec2 operator/(gdaVec2 a, float s){ return gda_vec2_div(a, s); }
+
+inline gdaVec2 operator*(gdaVec2 a, gdaVec2 b){gdaVec2 r = {a.x * b.x, a.y * b.y}; return(r);}
+inline gdaVec2 operator/(gdaVec2 a, gdaVec2 b){gdaVec2 r = {a.x / b.x, a.y / b.y}; return(r);}
+
+inline gdaVec2 operator+=(gdaVec2& a, gdaVec2 b){return(a = a + b);}
+inline gdaVec2 operator-=(gdaVec2& a, gdaVec2 b){return(a = a - b);}
+inline gdaVec2 operator*=(gdaVec2& a, float s){return(a = a * s);}
+inline gdaVec2 operator/=(gdaVec2& a, float s){return(a = a / s);}
+
+/*gdaVec3 operator overloading*/
+inline bool operator==(gdaVec3 a, gdaVec3 b){return((a.x == b.x) && (a.y == b.y) && (a.z == b.z));}
+inline bool operator!=(gdaVec3 a, gdaVec3 b){return((a.x != b.x) || (a.y != b.y) || (a.z != b.z));}
+
+inline gdaVec3 operator+(gdaVec3 a){return(a);}
+inline gdaVec3 operator-(gdaVec3 a){gdaVec3 r = {-a.x, -a.y, -a.z}; return(r);}
+
+inline gdaVec3 operator+(gdaVec3 a, gdaVec3 b){ return gda_vec3_add(a, b); }
+inline gdaVec3 operator-(gdaVec3 a, gdaVec3 b){ return gda_vec3_sub(a, b); }
+
+inline gdaVec3 operator*(gdaVec3 a, float s){ return gda_vec3_mul(a, s); }
+inline gdaVec3 operator*(float s, gdaVec3 a){ return gda_vec3_mul(a, s); }
+inline gdaVec3 operator/(gdaVec3 a, float s){ return gda_vec3_div(a, s); }
+
+inline gdaVec3 operator*(gdaVec3 a, gdaVec3 b){gdaVec3 r = {a.x * b.x, a.y * b.y, a.z * b.z}; return(r);}
+inline gdaVec3 operator/(gdaVec3 a, gdaVec3 b){gdaVec3 r = {a.x / b.x, a.y / b.y, a.z / b.z}; return(r);}
+
+inline gdaVec3 operator+=(gdaVec3& a, gdaVec3 b){return(a = a + b);}
+inline gdaVec3 operator-=(gdaVec3& a, gdaVec3 b){return(a = a - b);}
+inline gdaVec3 operator*=(gdaVec3& a, float s){return(a = a * s);}
+inline gdaVec3 operator/=(gdaVec3& a, float s){return(a = a / s);}
+
+/*gdaVec4 operator overloading*/
+inline bool operator==(gdaVec4 a, gdaVec4 b) { return((a.x == b.x) && (a.y == b.y) && (a.z == b.z) && (a.w == b.w)); }
+inline bool operator!=(gdaVec4 a, gdaVec4 b){ return((a.x != b.x) || (a.y != b.y) || (a.z != b.z) || (a.w != b.w)); }
+
+inline gdaVec4 operator+(gdaVec4 a){ return(a); }
+inline gdaVec4 operator-(gdaVec4 a){ gdaVec4 r = { -a.x, -a.y }; return(r); }
+
+inline gdaVec4 operator+(gdaVec4 a, gdaVec4 b){ return gda_vec4_add(a, b); }
+inline gdaVec4 operator-(gdaVec4 a, gdaVec4 b){ return gda_vec4_sub(a, b); }
+
+inline gdaVec4 operator*(gdaVec4 a, float s){ return gda_vec4_mul(a, s); }
+inline gdaVec4 operator*(float s, gdaVec4 a){ return gda_vec4_mul(a, s); }
+inline gdaVec4 operator/(gdaVec4 a, float s){ return gda_vec4_div(a, s); }
+
+inline gdaVec4 operator*(gdaVec4 a, gdaVec4 b){gdaVec4 r = {a.x * b.x, a.y * b.y, a.z * b.z, a.w * b.w}; return(r);}
+inline gdaVec4 operator/(gdaVec4 a, gdaVec4 b){gdaVec4 r = {a.x / b.x, a.y / b.y, a.z / b.z, a.w / b.w}; return(r);}
+
+inline gdaVec4 operator+=(gdaVec4& a, gdaVec4 b){return(a = a + b);}
+inline gdaVec4 operator-=(gdaVec4& a, gdaVec4 b){return(a = a - b);}
+inline gdaVec4 operator*=(gdaVec4& a, float s){return(a = a * s);}
+inline gdaVec4 operator/=(gdaVec4& a, float s){return(a = a / s);}
 #endif
 
 #define GDA_MATH_H
@@ -571,12 +645,12 @@ gdaVec4 gda_vec4_sub(gdaVec4 v0, gdaVec4 v1){GDA_VEC4_WTF2_OP(v0, v1, -);}
 gdaVec4 gda_vec4_mul(gdaVec4 v, float s){GDA_VEC4_WTF1_OP(v, * s);}
 gdaVec4 gda_vec4_div(gdaVec4 v, float s){GDA_VEC4_WTF1_OP(v, / s);}
 
-#undef GDA_VEC2_UNARY_OPERATION
-#undef GDA_VEC2_BINARY_OPERATION
-#undef GDA_VEC3_UNARY_OPERATION
-#undef GDA_VEC3_BINARY_OPERATION
-#undef GDA_VEC4_UNARY_OPERATION
-#undef GDA_VEC4_BINARY_OPERATION
+#undef GDA_VEC2_WTF1_OP
+#undef GDA_VEC2_WTF2_OP
+#undef GDA_VEC3_WTF1_OP
+#undef GDA_VEC3_WTF2_OP
+#undef GDA_VEC4_WTF1_OP
+#undef GDA_VEC4_WTF2_OP
 
 float gda_vec2_dot(gdaVec2 v0, gdaVec2 v1){ return v0.x * v1.x + v0.y * v1.y; }
 float gda_vec3_dot(gdaVec3 v0, gdaVec3 v1){ return v0.x * v1.x + v0.y * v1.y + v0.z * v1.z; }
@@ -1079,11 +1153,15 @@ float gda_quat_angle(gdaQuat q){
 
 gdaVec3 gda_quat_rotate_vec3(gdaQuat q, gdaVec3 v){
 	gdaVec3 r, t, p;
-	t = gda_vec3_cross(q.xyz, v);
-	t = gda_vec3_mul(t, 2.0f);
+	t = gda_vec3_mul(gda_vec3_cross(q.xyz, v), 2.0f);
 	p = gda_vec3_cross(q.xyz, t);
-	return (gda_vec3_add(gda_vec3_add(gda_vec3_mul(t, q.w), v), p));
+	r = gda_vec3_add(gda_vec3_add(gda_vec3_mul(t, q.w), v), p);
+	return (r);
 }
+
+float gda_quat_roll(gdaQuat q){ return(gda_arctan2(2.0f*q.x*q.y + q.z*q.w, q.x*q.x + q.w*q.w - q.y*q.y - q.z*q.z)); }
+float gda_quat_pitch(gdaQuat q){ return(gda_arctan2(2.0f*q.y*q.z + q.w*q.x, q.w*q.w - q.x*q.x - q.y*q.y + q.z*q.z)); }
+float gda_quat_yaw(gdaQuat q){ return gda_arcsin(-2.0f*(q.x*q.z - q.w*q.y)); }
 
 void gda_mat4_from_quat(gdaMat4* out, gdaQuat q){
 	*(out->data + 1)  = 1.0 - 2 * q.y * q.y - 2 * q.z * q.z;
@@ -1174,6 +1252,7 @@ gdaQuat gda_quat_from_mat4(gdaMat4* m){
 	return(r);
 }
 
+/*Interpolations implementation*/
 float gda_lerp(float a, float b, float t){ return(a * (1.0f - t) + b * t); }
 float gda_unlerp(float a, float b, float t){ return((t - a) / (b - a)); }
 float gda_smooth_step(float a, float b, float t){ float x = (t - a) / (b - a); return(x * x * (3.0f - 2.0f * x)); }

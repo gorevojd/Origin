@@ -1,5 +1,17 @@
 #ifndef GDA_ALGO_H
 
+//    ________  ________  ________          ________  ___       ________  ________     
+//   |\   ____\|\   ___ \|\   __  \        |\   __  \|\  \     |\   ____\|\   __  \    
+//   \ \  \___|\ \  \_|\ \ \  \|\  \       \ \  \|\  \ \  \    \ \  \___|\ \  \|\  \   
+//    \ \  \  __\ \  \ \\ \ \   __  \       \ \   __  \ \  \    \ \  \  __\ \  \\\  \  
+//     \ \  \|\  \ \  \_\\ \ \  \ \  \       \ \  \ \  \ \  \____\ \  \|\  \ \  \\\  \ 
+//      \ \_______\ \_______\ \__\ \__\       \ \__\ \__\ \_______\ \_______\ \_______\
+//       \|_______|\|_______|\|__|\|__|        \|__|\|__|\|_______|\|_______|\|_______|
+//                                                                                     
+                                                                                  
+                                                                                 
+
+
 #ifndef GDA_ALGO_DEF
 #ifdef GDA_AGLO_STATIC
 #define GDA_ALGO_DEF static
@@ -164,6 +176,35 @@ GDA_ALGO_DEF void gda_heap_sort_desc_u64(u64* arr, int size);
 GDA_ALGO_DEF void gda_heap_sort_desc_r32(r32* arr, int size);
 GDA_ALGO_DEF void gda_heap_sort_desc_r64(r64* arr, int size);
 
+/*Merge sort*/
+GDA_ALGO_DEF void gda__merge_rek_s32(s32* arr, s32 temp_arr, int left, int right);
+GDA_ALGO_DEF void gda__merge_rek_s64(s64* arr, s64 temp_arr, int left, int right);
+GDA_ALGO_DEF void gda__merge_rek_u32(u32* arr, u32 temp_arr, int left, int right);
+GDA_ALGO_DEF void gda__merge_rek_u64(u64* arr, u64 temp_arr, int left, int right);
+GDA_ALGO_DEF void gda__merge_rek_r32(r32* arr, r32 temp_arr, int left, int right);
+GDA_ALGO_DEF void gda__merge_rek_r64(r64* arr, r64 temp_arr, int left, int right);
+
+GDA_ALGO_DEF void gda__merge_rek_desc_s32(s32* arr, s32 temp_arr, int left, int right);
+GDA_ALGO_DEF void gda__merge_rek_desc_s64(s64* arr, s64 temp_arr, int left, int right);
+GDA_ALGO_DEF void gda__merge_rek_desc_u32(u32* arr, u32 temp_arr, int left, int right);
+GDA_ALGO_DEF void gda__merge_rek_desc_u64(u64* arr, u64 temp_arr, int left, int right);
+GDA_ALGO_DEF void gda__merge_rek_desc_r32(r32* arr, r32 temp_arr, int left, int right);
+GDA_ALGO_DEF void gda__merge_rek_desc_r64(r64* arr, r64 temp_arr, int left, int right);
+
+GDA_ALGO_DEF void gda_merge_sort_s32(s32* arr, int size);
+GDA_ALGO_DEF void gda_merge_sort_s64(s64* arr, int size);
+GDA_ALGO_DEF void gda_merge_sort_u32(u32* arr, int size);
+GDA_ALGO_DEF void gda_merge_sort_u64(u64* arr, int size);
+GDA_ALGO_DEF void gda_merge_sort_r32(r32* arr, int size);
+GDA_ALGO_DEF void gda_merge_sort_r64(r64* arr, int size);
+
+GDA_ALGO_DEF void gda_merge_sort_desc_s32(s32* arr, int size);
+GDA_ALGO_DEF void gda_merge_sort_desc_s64(s64* arr, int size);
+GDA_ALGO_DEF void gda_merge_sort_desc_u32(u32* arr, int size);
+GDA_ALGO_DEF void gda_merge_sort_desc_u64(u64* arr, int size);
+GDA_ALGO_DEF void gda_merge_sort_desc_r32(r32* arr, int size);
+GDA_ALGO_DEF void gda_merge_sort_desc_r64(r64* arr, int size);
+
 #define GDA_ALGO_H
 #endif
 
@@ -198,6 +239,7 @@ u64 gda_gcd_u64(u64 a, u64 b){GDA_GCD_DEF(u64, a, b)}
 #undef GDA_GCD_DEF
 
 
+/*Bubble sort implementation*/
 #define GDAA_BUBBLE_SORT_MACRO(arr, sz, t, tn)	\
  	int wtf_iteration = 0;	\
 	u32 not_sorted = 1;	\
@@ -242,6 +284,7 @@ void gda_bubble_sort_desc_r64(r64* arr, int size){ GDAA_BUBBLE_SORT_DESC_MACRO(a
 #undef GDA_BUBBLE_SORT_DESC_MACRO
 
 
+/*Insertion sort implementation*/
 #define GDAA_INSERTION_SORT_MACRO(arr, sz, t, tn)	\
 	for (int i = 1; i < sz; i++){	\
 		int j = i;	\
@@ -277,6 +320,7 @@ void gda_insertion_sort_desc_r64(r64* arr, int size){GDAA_INSERTION_SORT_DESC_MA
 #undef GDAA_INSERTION_SORT_DESC_MACRO
 
 
+/*Selection sort implementation*/
 #define GDAA_SELECTION_SORT_MACRO(arr, sz, t, tn)	\
 	for(int i = 0; i < sz - 1; i++){	\
 		int wtf_min_index = i;	\
@@ -320,6 +364,7 @@ void gda_selection_sort_desc_r64(r64* arr, int size){ GDAA_SELECTION_SORT_DESC_M
 #undef GDAA_SELECTION_SORT_DESC_MACRO
 
 
+/*Heap sort implementation*/
 #define GDAA_HEAPIFY_MACRO(arr, sz, t) 	\
 	for(int i = 0; i < sz; i++){	\
 		int wtf_index = i;	\
@@ -368,7 +413,7 @@ r64 gdaa__remove_top_r64(r64* arr, int size){ GDAA_REMOVE_TOP_MACRO(arr, size, r
 	gdaa__heapify_##t(arr, sz);	\
 	for(int i = 0; i < sz; i++){	\
 		arr[size - 1 - i] = gdaa__remove_top_##t(arr, temp_size);	\
-		temp_size--;	\
+		temp_size = temp_size - 1;	\
 	}
 
 void gda_heap_sort_s32(s32* arr, int size){ GDAA_HEAP_SORT_MACRO(arr, size, s32) }
@@ -378,5 +423,80 @@ void gda_heap_sort_u64(u64* arr, int size){ GDAA_HEAP_SORT_MACRO(arr, size, u64)
 void gda_heap_sort_r32(r32* arr, int size){ GDAA_HEAP_SORT_MACRO(arr, size, r32) }
 void gda_heap_sort_r64(r64* arr, int size){ GDAA_HEAP_SORT_MACRO(arr, size, r64) }
 #undef GDAA_HEAP_SORT_MACRO
+
+
+/*Merge sort implementation*/
+
+#define GDA_MERGE_SORT_REK_MACRO(arr, temp_arr, left, right, t, compare_sign, merge_rek_func_)	\
+	if((left) == (right)){return;}	\
+	int midpoint = ((right)+(left)) / 2;	\
+	merge_rek_func_##t(arr, temp_arr, (left), midpoint);	\
+	merge_rek_func_##t(arr, temp_arr, (midpoint + 1), (right));	\
+	int left_index = (left);	\
+	int right_index = midpoint + 1;	\
+	int wtf_index = left_index;	\
+	while((left_index <= midpoint) && (right_index <= (right))){	\
+		if(arr[left_index] compare_sign arr[right_index]){	\
+			temp_arr[wtf_index] = arr[left_index];	\
+			left_index = left_index + 1;	\
+		}	\
+		else{	\
+			temp_arr[wtf_index] = arr[right_index];	\
+			right_index = right_index + 1;	\
+		}	\
+		wtf_index = wtf_index + 1;	\
+	}	\
+	for(int i = left_index; i <= midpoint; i++){	\
+		temp_arr[wtf_index] = arr[i];	\
+		wtf_index = wtf_index + 1;	\
+	}	\
+	for(int i = right_index; i <= (right); i++){	\
+		temp_arr[wtf_index] = arr[i];	\
+		wtf_index = wtf_index + 1;	\
+	}	\
+	for(int i = (left); i <= (right); i++){	\
+		arr[i] = temp_arr[i];	\
+	}	
+
+void gda__merge_rek_s32(s32* arr, s32* temp_arr, int left, int right){ GDA_MERGE_SORT_REK_MACRO(arr, temp_arr, left, right, s32, <=, gda__merge_rek_) }
+void gda__merge_rek_s64(s64* arr, s64* temp_arr, int left, int right){ GDA_MERGE_SORT_REK_MACRO(arr, temp_arr, left, right, s64, <=, gda__merge_rek_) }
+void gda__merge_rek_u32(u32* arr, u32* temp_arr, int left, int right){ GDA_MERGE_SORT_REK_MACRO(arr, temp_arr, left, right, u32, <=, gda__merge_rek_) }
+void gda__merge_rek_u64(u64* arr, u64* temp_arr, int left, int right){ GDA_MERGE_SORT_REK_MACRO(arr, temp_arr, left, right, u64, <=, gda__merge_rek_) }
+void gda__merge_rek_r32(r32* arr, r32* temp_arr, int left, int right){ GDA_MERGE_SORT_REK_MACRO(arr, temp_arr, left, right, r32, <=, gda__merge_rek_) }
+void gda__merge_rek_r64(r64* arr, r64* temp_arr, int left, int right){ GDA_MERGE_SORT_REK_MACRO(arr, temp_arr, left, right, r64, <=, gda__merge_rek_) }
+
+void gda__merge_rek_desc_s32(s32* arr, s32* temp_arr, int left, int right){ GDA_MERGE_SORT_REK_MACRO(arr, temp_arr, left, right, s32, >=, gda__merge_rek_desc_) }
+void gda__merge_rek_desc_s64(s64* arr, s64* temp_arr, int left, int right){ GDA_MERGE_SORT_REK_MACRO(arr, temp_arr, left, right, s64, >=, gda__merge_rek_desc_) }
+void gda__merge_rek_desc_u32(u32* arr, u32* temp_arr, int left, int right){ GDA_MERGE_SORT_REK_MACRO(arr, temp_arr, left, right, u32, >=, gda__merge_rek_desc_) }
+void gda__merge_rek_desc_u64(u64* arr, u64* temp_arr, int left, int right){ GDA_MERGE_SORT_REK_MACRO(arr, temp_arr, left, right, u64, >=, gda__merge_rek_desc_) }
+void gda__merge_rek_desc_r32(r32* arr, r32* temp_arr, int left, int right){ GDA_MERGE_SORT_REK_MACRO(arr, temp_arr, left, right, r32, >=, gda__merge_rek_desc_) }
+void gda__merge_rek_desc_r64(r64* arr, r64* temp_arr, int left, int right){ GDA_MERGE_SORT_REK_MACRO(arr, temp_arr, left, right, r64, >=, gda__merge_rek_desc_) }
+#undef MERGE_SORT_REK_MACRO
+
+#define GDA_MERGE_SORT_MACRO(arr, sz, t)	\
+	t* temp_array = (t*)malloc(sz * sizeof(t));	\
+	gda__merge_rek_##t(arr, temp_array, 0, (sz - 1));	\
+	free(temp_array);	
+
+void gda_merge_sort_s32(s32* arr, int size){ GDA_MERGE_SORT_MACRO(arr, size, s32) }
+void gda_merge_sort_s64(s64* arr, int size){ GDA_MERGE_SORT_MACRO(arr, size, s64) }
+void gda_merge_sort_u32(u32* arr, int size){ GDA_MERGE_SORT_MACRO(arr, size, u32) }
+void gda_merge_sort_u64(u64* arr, int size){ GDA_MERGE_SORT_MACRO(arr, size, u64) }
+void gda_merge_sort_r32(r32* arr, int size){ GDA_MERGE_SORT_MACRO(arr, size, r32) }
+void gda_merge_sort_r64(r64* arr, int size){ GDA_MERGE_SORT_MACRO(arr, size, r64) }
+#undef GDA_MERGE_SORT_MACRO
+
+#define GDA_MERGE_SORT_DESC_MACRO(arr, sz, t)	\
+	t* temp_array = (t*)malloc(sz * sizeof(t));	\
+	gda__merge_rek_desc_##t(arr, temp_array, 0, (sz - 1));	\
+	free(temp_array);	
+
+void gda_merge_sort_desc_s32(s32* arr, int size){ GDA_MERGE_SORT_DESC_MACRO(arr, size, s32) }
+void gda_merge_sort_desc_s64(s64* arr, int size){ GDA_MERGE_SORT_DESC_MACRO(arr, size, s64) }
+void gda_merge_sort_desc_u32(u32* arr, int size){ GDA_MERGE_SORT_DESC_MACRO(arr, size, u32) }
+void gda_merge_sort_desc_u64(u64* arr, int size){ GDA_MERGE_SORT_DESC_MACRO(arr, size, u64) }
+void gda_merge_sort_desc_r32(r32* arr, int size){ GDA_MERGE_SORT_DESC_MACRO(arr, size, r32) }
+void gda_merge_sort_desc_r64(r64* arr, int size){ GDA_MERGE_SORT_DESC_MACRO(arr, size, r64) }
+#undef GDA_MERGE_SORT_DESC_MACRO
 
 #endif

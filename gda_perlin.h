@@ -9,7 +9,6 @@
 //       \|_______|\|_______|\|__|\|__|        \|__|     \|_______|\|__|\|__|\|_______|\|__|\|__| \|__|
 //                                                                                                    
 
-
 extern "C" float gda_perlin_noise3(float x, float y, float z, int wraw_x=0, int wraw_y=0, int wrap_z=0);
 #else
 extern float gda_perlin_noise3(float x, float y, float z, int wraw_x, int wraw_y, int wrap_z);

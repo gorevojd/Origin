@@ -26,6 +26,11 @@
 #pragma warning(pop)
 #endif
 
+#include <stdlib.h>
+
+#ifndef GDA_TYPES_DEFINED
+#define GDA_TYPES_DEFINED
+
 #ifdef _MSC_VER
 typedef char s8;
 typedef short s16;
@@ -51,6 +56,7 @@ typedef uint64_t u64;
 
 typedef float r32;
 typedef double r64;
+#endif
 
 #ifndef gda_min
 #define gda_min(a, b) ((a) < (b) ? (a) : (b))
@@ -206,7 +212,6 @@ GDA_ALGO_DEF void gda_merge_sort_desc_r64(r64* arr, int size);
 #endif
 
 
-#define GDA_ALGO_IMPLEMENTATION
 #ifdef GDA_ALGO_IMPLEMENTATION
 
 #define GDAA_SWAP_MACRO(t, a1, a2) 	\

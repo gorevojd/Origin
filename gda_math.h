@@ -1,13 +1,5 @@
 #ifndef GDA_MATH_H
-
-//    ________  ________  ________          _____ ______   ________  _________  ___  ___     
-//   |\   ____\|\   ___ \|\   __  \        |\   _ \  _   \|\   __  \|\___   ___\\  \|\  \    
-//   \ \  \___|\ \  \_|\ \ \  \|\  \       \ \  \\\__\ \  \ \  \|\  \|___ \  \_\ \  \\\  \   
-//    \ \  \  __\ \  \ \\ \ \   __  \       \ \  \\|__| \  \ \   __  \   \ \  \ \ \   __  \  
-//     \ \  \|\  \ \  \_\\ \ \  \ \  \       \ \  \    \ \  \ \  \ \  \   \ \  \ \ \  \ \  \ 
-//      \ \_______\ \_______\ \__\ \__\       \ \__\    \ \__\ \__\ \__\   \ \__\ \ \__\ \__\
-//       \|_______|\|_______|\|__|\|__|        \|__|     \|__|\|__|\|__|    \|__|  \|__|\|__|
-//                                                                                           
+#define GDA_MATH_H
 
 #ifdef GDA_MATH_ALLOW_SIMD
 #include <xmmintrin.h>
@@ -127,7 +119,7 @@ extern "C" {
 
 
 #ifndef gda_min
-#define gda_min(a, b) ((a) < (b) ? (a) : (b))
+#define gdam_min(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
 #ifndef gda_max
@@ -268,7 +260,7 @@ extern "C" {
 	GDA_MATH_DEF void gda_mat4_perspective(gdaMat4* out, float fovy, float aspect, float z_near, float z_far);
 	GDA_MATH_DEF void gda_mat4_infinite_perspective(gdaMat4* out, float fovy, float aspect, float z_near);
 
-	GDA_MATH_DEF gdaMat4 gda_mat4_look_at(gdaVec3 eye, gdaVec3 centre, gdaVec3 up);
+	GDA_MATH_DEF void gda_mat4_look_at(gdaMat4* out, gdaVec3 eye, gdaVec3 centre, gdaVec3 up);
 
 	GDA_MATH_DEF void gda_float22_identity(float m[2][2]);
 	GDA_MATH_DEF gdaFloat2* gda_float22_m(gdaMat2* m);
@@ -417,11 +409,10 @@ inline gdaVec4 operator*=(gdaVec4& a, float s){return(a = a * s);}
 inline gdaVec4 operator/=(gdaVec4& a, float s){return(a = a / s);}
 #endif
 
-#define GDA_MATH_H
-#endif
+#endif /*GDA_MATH_H*/
 
-#define GDA_MATH_IMPLEMENTATION
-#ifdef GDA_MATH_IMPLEMENTATION
+#if defined(GDA_MATH_IMPLEMENTATION) && !defined(GDA_MATH_IMPLEMENTATION_DONE)
+#define GDA_MATH_IMPLEMENTATION_DONE
 
 static void gda__memcpy_4byte(void *dest, void const *src, size_t size){
 	size_t i;
@@ -1447,7 +1438,6 @@ inline gdaVec4 MultiplyMatrixBygdaVec4(gdaMat4 mat, gdaVec4 vec){
 #endif
 	return(Result);
 }
-
 */
 
 #endif /*GDA_MATH_IMPLEMENTATION*/

@@ -1,61 +1,61 @@
-#ifndef GDA_H
+#ifndef GD_H
 
 #ifdef __cplusplus
 extern "C"{
 #endif
 
 #ifdef __cplusplus
-#define GDA_EXTERN extern "C"
+#define GD_EXTERN extern "C"
 #else
-#define GDA_EXTERN extern
+#define GD_EXTERN extern
 #endif
 
 #ifdef _WIN32
-#define GDA_DLL_EXPORT GDA_EXTERN __declspec(dllexport)
-#define GDA_DLL_IMPORT GDA_EXTERN __declspec(dllimport)
+#define GD_DLL_EXPORT GD_EXTERN __declspec(dllexport)
+#define GD_DLL_IMPORT GD_EXTERN __declspec(dllimport)
 #else
-#define GDA_DLL_EXPORT GDA_EXTERN __attribute__((visibility("default")))
-#define GDA_DLL_IMPORT GDA_EXTERN
+#define GD_DLL_EXPORT GD_EXTERN __attribute__((visibility("default")))
+#define GD_DLL_IMPORT GD_EXTERN
 #endif
 
 
-#ifndef GDA_DEF
-#ifdef GDA_STATIC
-#define GDA_DEF static
+#ifndef GD_DEF
+#ifdef GD_STATIC
+#define GD_DEF static
 #else
-#define GDA_DEF extern
+#define GD_DEF extern
 #endif
 #endif
 
 
 #if defined(_WIN64) || defined(__x86_64__) || defined(__64BIT__) || defined(__powerpc64__) || defined(__ppc64__)
-#ifndef GDA_ARCH_64_BIT
-#define GDA_ARCH_64_BIT 1
+#ifndef GD_ARCH_64_BIT
+#define GD_ARCH_64_BIT 1
 #endif
 #else
-#ifndef GDA_ARCH_32_BIT
-#define GDA_ARCH_32_BIT 1
+#ifndef GD_ARCH_32_BIT
+#define GD_ARCH_32_BIT 1
 #endif
 #endif
 #if defined(_WIN32) || defined(_WIN64)
-#ifndef GDA_SYSTEM_WINDOWS
-#define GDA_SYSTEM_WINDOWS 1
+#ifndef GD_SYSTEM_WINDOWS
+#define GD_SYSTEM_WINDOWS 1
 #endif
 #elif defined(__APPLE__) && defined(__MACH__)
-#ifndef GDA_SYSTEM_OSX
-#define GDA_SYSTEM_OSX 1
+#ifndef GD_SYSTEM_OSX
+#define GD_SYSTEM_OSX 1
 #endif
 #elif defined(__unix__)
-#ifndef GDA_SYSTEM_UNIX
-#define GDA_SYSTEM_UNIX 1
+#ifndef GD_SYSTEM_UNIX
+#define GD_SYSTEM_UNIX 1
 #endif
 #ifdef __linux__
-#ifndef GDA_SYSTEM_LINUX
-#define GDA_SYSTEM_LINUX 1
+#ifndef GD_SYSTEM_LINUX
+#define GD_SYSTEM_LINUX 1
 #endif
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
-#ifndef GDA_SYSTEM_FREEBSD
-#define GDA_SYSTEM_FREEBSD 1
+#ifndef GD_SYSTEM_FREEBSD
+#define GD_SYSTEM_FREEBSD 1
 #endif
 #else
 #error this UNIX OS is not supported
@@ -66,43 +66,43 @@ extern "C"{
 
 
 #ifdef _MSC_VER
-#define GDA_COMPILER_MSVC 1
+#define GD_COMPILER_MSVC 1
 #elif defined(__GNUC__)
-#define GDA_COMPILER_GCC 1
+#define GD_COMPILER_GCC 1
 #elif defined(__clang__)
-#define GDA_COMPILER_CLANG 1
+#define GD_COMPILER_CLANG 1
 #else
 #error This compiler is not supported
 #endif
 
 
 #if defined(_M_IX86) || defined(_M_X64) || defined(__i386__) || defined(__x86_64__)
-#ifndef GDA_CPU_X86
-#define GDA_CPU_X86 1
+#ifndef GD_CPU_X86
+#define GD_CPU_X86 1
 #endif
-#ifndef GDA_CACHE_LINE_SIZE
-#define GDA_CACHE_LINE_SIZE 64
+#ifndef GD_CACHE_LINE_SIZE
+#define GD_CACHE_LINE_SIZE 64
 #endif
 #elif defined(_M_PPC) || defined(__powerpc__) || defined(__powerpc64__)
-#ifndef GDA_CPU_PPC
-#define GDA_CPU_PPC 1
+#ifndef GD_CPU_PPC
+#define GD_CPU_PPC 1
 #endif
-#ifndef GDA_CACHE_LINE_SIZE
-#define GDA_CACHE_LINE_SIZE 128
+#ifndef GD_CACHE_LINE_SIZE
+#define GD_CACHE_LINE_SIZE 128
 #endif
 #elif defined(__arm__)
-#ifndef GDA_CPU_ARM
-#define GDA_CPU_ARM 1
+#ifndef GD_CPU_ARM
+#define GD_CPU_ARM 1
 #endif
-#ifndef GDA_CACHE_LINE_SIZE
-#define GDA_CACHE_LINE_SIZE 64
+#ifndef GD_CACHE_LINE_SIZE
+#define GD_CACHE_LINE_SIZE 64
 #endif
 #elif defined(__MIPSEL__) || defined(__mips_isa_rev)
-#ifndef GDA_CPU_MIPS
-#define GDA_CPU_MIPS 1
+#ifndef GD_CPU_MIPS
+#define GD_CPU_MIPS 1
 #endif
-#ifndef GDA_CACHE_LINE_SIZE
-#define GDA_CACHE_LINE_SIZE 64
+#ifndef GD_CACHE_LINE_SIZE
+#define GD_CACHE_LINE_SIZE 64
 #endif
 #else
 #error Unknown CPU type
@@ -115,40 +115,26 @@ extern "C"{
 #endif
 #endif
 
-#ifndef GDA_TYPES_DEFINED
-#define GDA_TYPES_DEFINED
+#ifndef GD_TYPES_DEFINED
+#define GD_TYPES_DEFINED
 
-#ifdef GDA_COMPILER_MSVC
+#ifdef GD_COMPILER_MSVC
 #if _MSC_VER < 1300
-typedef unsigned char u8;
 typedef unsigned char uint8;
-typedef signed char s8;
 typedef signed char int8;
-typedef unsigned short u16;
 typedef unsigned short uint16;
-typedef signed short s16;
 typedef signed short int16;
-typedef unsigned int u32;
 typedef unsigned int uint32;
-typedef signed int s32;
 typedef signed int int32;
 #else
-typedef unsigned __int8 u8;
 typedef unsigned __int8 uint8;
-typedef signed __int8 s8;
 typedef signed __int8 int8;
-typedef unsigned __int16 u16;
 typedef unsigned __int16 uint16;
-typedef signed __int16 s16;
 typedef signed __int16 int16;
-typedef unsigned __int32 u32;
 typedef unsigned __int32 uint32;
-typedef signed __int32 s32;
 typedef signed __int32 int32;
 #endif
-typedef unsigned __int64 u64;
 typedef unsigned __int64 uint64;
-typedef signed __int64 s64;
 typedef signed __int64 int64;
 #else
 #include <stdint.h>
@@ -170,17 +156,12 @@ typedef  int64_t s64;
 typedef int64_t int64;
 #endif
 
-typedef float  r32;
 typedef float real32;
-typedef double r64;
 typedef float real64;
 
-typedef s8 b8;
-typedef s8 bool8;
-typedef s16 b16;
-typedef s16 bool16;
-typedef s32 b32;
-typedef s32 bool32;
+typedef int8 bool8;
+typedef int16 bool16;
+typedef int32 bool32;
 #endif
 
 #ifndef __cplusplus
@@ -218,13 +199,13 @@ typedef s32 bool32;
 #define I64_MIN (-0x7fffffffffffffffll - 1)
 #define I64_MAX 0x7fffffffffffffffll
 
-#if defined(GDA_ARCH_32_BIT)
+#if defined(GD_ARCH_32_BIT)
 #define USIZE_MIN U32_MIN
 #define USIZE_MAX U32_MAX
 
 #define ISIZE_MIN I32_MIN
 #define ISIZE_MAX I32_MAX
-#elif defined(GDA_ARCH_64_BIT)
+#elif defined(GD_ARCH_64_BIT)
 #define USIZE_MIN U64_MIN
 #define USIZE_MAX U64_MAX
 
@@ -271,73 +252,73 @@ typedef uintptr_t uintptr;
 typedef intptr_t intptr;
 #endif
 
-#ifndef GDA_GLOBAL_VARIABLE
-#define GDA_GLOBAL_VARIABLE	static
+#ifndef GD_GLOBAL_VARIABLE
+#define GD_GLOBAL_VARIABLE	static
 #endif
 
-#ifndef GDA_INTERNAL_FUNCTION
-#define GDA_INTERNAL_FUNCTION static
+#ifndef GD_INTERNAL_FUNCTION
+#define GD_INTERNAL_FUNCTION static
 #endif
 
-#ifndef GDA_LOCAL_PERSIST
-#define GDA_LOCAL_PERSIST static
+#ifndef GD_LOCAL_PERSIST
+#define GD_LOCAL_PERSIST static
 #endif
 
-#ifndef GDA_BIT
-#define GDA_BIT(value) (1 << (value))
+#ifndef GD_BIT
+#define GD_BIT(value) (1 << (value))
 #endif
 
-#ifndef GDA_LERP
-#define GDA_LERP(a, b, t) ((a) + ((b) - (a)) * (t))
+#ifndef GD_LERP
+#define GD_LERP(a, b, t) ((a) + ((b) - (a)) * (t))
 #endif
 
-#ifndef GDA_MIN
-#define GDA_MIN(a, b) (a) < (b) ? (a) : (b)
+#ifndef GD_MIN
+#define GD_MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
-#ifndef GDA_MAX
-#define GDA_MAX(a, b) (a) > (b) ? (a) : (b)
+#ifndef GD_MAX
+#define GD_MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
 
-#ifndef GDA_CLAMP
-#define GDA_CLAMP(value, lower, upper) (GDA_MIN(GDA_MAX(value, lower), upper))
+#ifndef GD_CLAMP
+#define GD_CLAMP(value, lower, upper) (GD_MIN(GD_MAX(value, lower), upper))
 #endif
 
-#ifndef GDA_CLAMP01
-#define GDA_CLAMP01(value) (GDA_CLAMP(value, 0, 1))
+#ifndef GD_CLAMP01
+#define GD_CLAMP01(value) (GD_CLAMP(value, 0, 1))
 #endif
 
-#ifndef GDA_SQUARE
-#define GDA_SQUARE(value) ((value) * (value))
+#ifndef GD_SQUARE
+#define GD_SQUARE(value) ((value) * (value))
 #endif
 
-#ifndef GDA_CUBE
-#define GDA_CUBE(value) ((value) * (value) * (value))
+#ifndef GD_CUBE
+#define GD_CUBE(value) ((value) * (value) * (value))
 #endif
 
-#ifndef GDA_ABS
-#define GDA_ABS(value) (value) >= 0 ? (value) : -(value
+#ifndef GD_ABS
+#define GD_ABS(value) ((value) >= 0 ? (value) : -(value))
 #endif
 
-#ifndef GDA_ARRAY_COUNT
-#define GDA_ARRAY_COUNT(Array) (sizeof(Array) / sizeof(Array[0]))
+#ifndef GD_ARRAY_COUNT
+#define GD_ARRAY_COUNT(Array) (sizeof(Array) / sizeof(Array[0]))
 #endif
 
-#ifndef GDA_KILOBYTES
-#define GDA_KILOBYTES(Value) (Value * 1024)
-#define GDA_MEGABYTES(Value) (GDA_KILOBYTES(1024) * Value)
-#define GDA_GIGABYTES(Value) (GDA_MEGABYTES(1024) * Value)
-#define GDA_TERABYTES(Value) (GDA_GIGABYTES(1024) * Value)
+#ifndef GD_KILOBYTES
+#define GD_KILOBYTES(Value) (Value * 1024)
+#define GD_MEGABYTES(Value) (GD_KILOBYTES(1024) * Value)
+#define GD_GIGABYTES(Value) (GD_MEGABYTES(1024) * Value)
+#define GD_TERABYTES(Value) (GD_GIGABYTES(1024) * Value)
 #endif
 
 #ifdef __cplusplus
 }
 #endif
 
-#define GDA_H
+#define GD_H
 #endif
 
-#ifdef GDA_IMPLEMENTATION
+#ifdef GD_IMPLEMENTATION
 
 
 

@@ -1,4 +1,5 @@
 #ifndef GD_H
+#define GD_H
 
 #ifdef __cplusplus
 extern "C"{
@@ -138,26 +139,21 @@ typedef unsigned __int64 uint64;
 typedef signed __int64 int64;
 #else
 #include <stdint.h>
-typedef uint8_t   u8;
 typedef uint8_t uint8;
-typedef  int8_t   s8;
 typedef int8_t int8;
-typedef uint16_t u16;
 typedef uint16_t uint16;
-typedef  int16_t s16;
 typedef int16_t int16;
-typedef uint32_t u32;
 typedef uint32_t uint32;
-typedef  int32_t s32;
 typedef int32_t int32;
-typedef uint64_t u64;
 typedef uint64_t uint64;
-typedef  int64_t s64;
 typedef int64_t int64;
 #endif
 
 typedef float real32;
 typedef float real64;
+
+typedef uintptr_t uintptr;
+typedef intptr_t  intptr;
 
 typedef int8 bool8;
 typedef int16 bool16;
@@ -314,8 +310,6 @@ typedef intptr_t intptr;
 #ifdef __cplusplus
 }
 #endif
-
-#define GD_H
 #endif
 
 #ifdef GD_IMPLEMENTATION

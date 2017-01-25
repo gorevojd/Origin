@@ -1,3 +1,14 @@
+/*
+LICENSE
+	This software is dual-licensed to the public domain and under the following
+	license: you are granted a perpetual, irrevocable license to copy, modify,
+	publish, and distribute this file as you see fit.
+
+CREDITS
+	Written by Gorevoy Dmitry
+*/
+
+
 #ifndef GD_H
 #define GD_H
 
@@ -152,6 +163,8 @@ typedef int64_t int64;
 typedef float real32;
 typedef float real64;
 
+
+#include <stdio.h>
 typedef uintptr_t uintptr;
 typedef intptr_t  intptr;
 

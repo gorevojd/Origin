@@ -1412,12 +1412,12 @@ gdRect3 gd_rect3(gdVec3 Pos, gdVec3 Dim){
     return(Result);
 }
 
-bool32 gd_rect2_contains(gdRect2 r, gdVec2 v){
+gdm_bool32 gd_rect2_contains(gdRect2 r, gdVec2 v){
     gdm_bool32 res = (v.x >= r.Pos.x) && (v.x <= r.Pos.x + r.Dimension.x) && (v.y >= r.Pos.y) && (v.y <= r.Pos.y + r.Dimension.y);
     return(res);
 }
 
-bool32 gd_rect2_has_intersection(gdRect2 r1, gdRect2 r2){
+gdm_bool32 gd_rect2_has_intersection(gdRect2 r1, gdRect2 r2){
     gdm_bool32 Result;
     gdm_bool32 Cont1 = gd_rect2_contains(r2, r1.Pos);
     gdm_bool32 Cont2 = gd_rect2_contains(r2, r1.Pos + gd_vec2(r1.Dimension.x, 0.0f));

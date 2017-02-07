@@ -13,14 +13,15 @@ CREDITS
 #define GD_H
 
 #ifdef __cplusplus
-extern "C"{
-#endif
-
-#ifdef __cplusplus
 #define GD_EXTERN extern "C"
 #else
 #define GD_EXTERN extern
 #endif
+
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 
 #ifdef _WIN32
 #define GD_DLL_EXPORT GD_EXTERN __declspec(dllexport)

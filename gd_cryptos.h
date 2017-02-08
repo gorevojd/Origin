@@ -1778,4 +1778,5 @@ void gd_hash_sha224(
 	gdcr__sha224_final(&ctx, digest);
 }
 
+
 #endif

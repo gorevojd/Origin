@@ -225,8 +225,8 @@ typedef int32 bool32;
 #error Unknown architecture size. This library only supports 32 bit and 64 bit architectures.
 #endif
 
-#define F32_MIN 1.17549435e-38f
-#define F32_MAX 3.40282347e+38f
+#define F32_MIN 1.175494351e-38F  
+#define F32_MAX 3.402823466e+38F
 
 #define F64_MIN 2.2250738585072014e-308
 #define F64_MAX 1.7976931348623157e+308

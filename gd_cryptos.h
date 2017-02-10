@@ -299,7 +299,7 @@ unsigned int gd_hash_h37(const char* Str){
 	unsigned int Hash = 2139062143;
 	const char* StrCopy = Str;
 	
-	for(const char* StrCopy = Str; *StrCopy; StrCopy++){
+	for(StrCopy = Str; *StrCopy; StrCopy++){
 		Hash = 37 * Hash + *StrCopy;
 	}
 
@@ -308,8 +308,9 @@ unsigned int gd_hash_h37(const char* Str){
 
 unsigned int gd_hash_faq6(const char* Str){
 	unsigned int Hash = 0;
+	const char* StrCopy = 0;
 
-	for(const char* StrCopy = Str; *StrCopy; StrCopy++){
+	for(StrCopy = Str; *StrCopy; StrCopy++){
 		Hash += (unsigned char)(*StrCopy);
 		Hash += (Hash << 10);
 		Hash = Hash ^ (Hash >> 6);
@@ -324,8 +325,9 @@ unsigned int gd_hash_faq6(const char* Str){
 
 unsigned int gd_hash_rot13(const char* Str){
 	unsigned int Hash = 0;
+	const char* StrCopy = 0;
 
-	for(const char* StrCopy = Str;
+	for(StrCopy = Str;
 		*StrCopy;
 		StrCopy++)
 	{
@@ -338,8 +340,9 @@ unsigned int gd_hash_rot13(const char* Str){
 
 unsigned int gd_hash_ly(const char* Str){
 	unsigned int Hash = 0;
+	const char* StrCopy = 0;;
 
-	for (const char* StrCopy = Str; *StrCopy; StrCopy++){
+	for (StrCopy = Str; *StrCopy; StrCopy++){
 		Hash = (Hash * 1664525) + (unsigned char)(*StrCopy) + 1013904223;
 	}
 
@@ -349,8 +352,9 @@ unsigned int gd_hash_ly(const char* Str){
 unsigned int gd_hash_rs(const char* Str){
 	unsigned int a = 63689;
 	unsigned int Hash = 0;
+	const char* StrCopy = 0;
 
-	for(const char* StrCopy; *StrCopy; StrCopy++){
+	for(StrCopy = Str; *StrCopy; StrCopy++){
 		Hash = Hash * a + (unsigned char)(*StrCopy);
 		a *= 378551;
 	}
@@ -361,8 +365,9 @@ unsigned int gd_hash_rs(const char* Str){
 unsigned int gd_hash_pjw(const char* Str){
 	unsigned int Hash = 0;
 	unsigned int High;
+	const char* StrCopy;
 
-	for(const char* StrCopy = Str; *Str; Str++){
+	for(StrCopy = Str; *Str; Str++){
 		Hash = (Hash << 4) + (unsigned char)(*StrCopy);
 		if(High = Hash & 0xF0000000){
 			Hash ^= High >> 24;
@@ -657,6 +662,7 @@ static void gdcr__aes_add_round_key(unsigned char* State, unsigned char* w, unsi
 
 static void gdcr__aes_key_expansion(unsigned char* key, unsigned char* w, int Nk){
 	unsigned char Temp[4];
+	int i;
 
 	int Nr = -1;;
 	switch (Nk){
@@ -673,14 +679,14 @@ static void gdcr__aes_key_expansion(unsigned char* key, unsigned char* w, int Nk
 
 	int Len = GDCR_AES_NB * (Nr + 1);
 	
-	for (int i = 0; i < Nk; i++){
+	for (i = 0; i < Nk; i++){
 		w[4 * i + 0] = (unsigned short)key[4 * i + 0];
 		w[4 * i + 1] = (unsigned short)key[4 * i + 1];
 		w[4 * i + 2] = (unsigned short)key[4 * i + 2];
 		w[4 * i + 3] = (unsigned short)key[4 * i + 3];
 	}
 
-	for (int i = Nk; i < Len; i++){
+	for (i = Nk; i < Len; i++){
 		Temp[0] = w[4 * (i - 1) + 0];
 		Temp[1] = w[4 * (i - 1) + 1];
 		Temp[2] = w[4 * (i - 1) + 2];

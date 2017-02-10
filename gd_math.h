@@ -30,6 +30,46 @@ CREDITS
 #endif
 #endif
 
+#ifndef GD_BIT
+#define GD_BIT(value) (1 << (value))
+#endif
+
+#ifndef GD_LERP
+#define GD_LERP(a, b, t) ((a) + ((b) - (a)) * (t))
+#endif
+
+#ifndef GD_MIN
+#define GD_MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
+#ifndef GD_MAX
+#define GD_MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
+
+#ifndef GD_CLAMP
+#define GD_CLAMP(value, lower, upper) (GD_MIN(GD_MAX(value, lower), upper))
+#endif
+
+#ifndef GD_CLAMP01
+#define GD_CLAMP01(value) (GD_CLAMP(value, 0, 1))
+#endif
+
+#ifndef GD_SQUARE
+#define GD_SQUARE(value) ((value) * (value))
+#endif
+
+#ifndef GD_CUBE
+#define GD_CUBE(value) ((value) * (value) * (value))
+#endif
+
+#ifndef GD_ABS
+#define GD_ABS(value) ((value) >= 0 ? (value) : -(value))
+#endif
+
+#ifndef GD_SIGN
+#define GD_SIGN(value) (((value) >= 0) ? (1) : -(1))
+#endif
+
 #ifdef _MSC_VER
 #pragma warning(push)
 //#pragma warning(dasable:4201)

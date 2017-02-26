@@ -130,6 +130,7 @@ typedef unsigned char gdcr_u8;
 	(a) = GDCR_ROTATE_LEFT_U32((a), (s));	\
 	(a) += (b);	
 
+#define GDCR_MD5_DIGEST_SIZE 16
 
 /*SHA Macroses*/
 #define GDCR_SHA_UNROLL_LOOPS
@@ -1158,9 +1159,9 @@ static void gdcr__sha256_transform(
 	const unsigned char* message,
 	unsigned int block_number)
 {
-	uint32 w[64];
-	uint32 wv[8];
-	uint32 t1, t2;
+	unsigned int w[64];
+	unsigned int wv[8];
+	unsigned int t1, t2;
 	const unsigned char *sub_block;
 	int i;
 
@@ -1380,9 +1381,9 @@ static void gdcr__sha512_transform(
 	const unsigned char *message,
 	unsigned int block_nb)
 {
-	uint64 w[80];
-	uint64 wv[8];
-	uint64 t1, t2;
+	unsigned long long w[80];
+	unsigned long long wv[8];
+	unsigned long long t1, t2;
 	const unsigned char *sub_block;
 	int i, j;
 

@@ -1,2 +1,4 @@
 stb_image.h
 gd_wavefront_obj.h
+gd_algo.h
+gd_galois.h

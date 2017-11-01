@@ -1246,7 +1246,11 @@ float gd_quat_mag(gdQuat q){ return gd_sqrt(gd_quat_dot(q, q)); }
 
 gdQuat gd_quat_norm(gdQuat q){ return(gd_quat_divf(q, gd_quat_mag(q))); }
 gdQuat gd_quat_conj(gdQuat q){ gdQuat r; r.xyz = gd_vec3(-q.x, -q.y, -q.z); r.w = q.w; return(r); }
-gdQuat gd_quat_inverse(gdQuat q){ gdQuat r = gd_quat_conj(q); r = gd_quat_divf(r, gd_quat_dot(q, q)); return(r); }
+gdQuat gd_quat_inverse(gdQuat q){ 
+    gdQuat r = gd_quat_conj(q); 
+    r = gd_quat_divf(r, gd_quat_dot(q, q)); 
+    return(r); 
+}
 
 gdVec3 gd_quat_axis(gdQuat q){
     gdQuat n = gd_quat_norm(q);

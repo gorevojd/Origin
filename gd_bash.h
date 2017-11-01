@@ -78,11 +78,9 @@ EXAMPLES:
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 	GDBSH_DEF void gd_bash_hash256(uint8_t* bytes, uint64_t bytes_count, uint8_t dest[32]);
-	GDBSH_DEF void gd_bash_hash394(uint8_t* bytes, uint64_t bytes_count, uint8_t dest[32]);
-	GDBSH_DEF void gd_bash_hash512(uint8_t* bytes, uint64_t bytes_count, uint8_t dest[32]);
-
+	GDBSH_DEF void gd_bash_hash394(uint8_t* bytes, uint64_t bytes_count, uint8_t dest[48]);
+	GDBSH_DEF void gd_bash_hash512(uint8_t* bytes, uint64_t bytes_count, uint8_t dest[64]);
 #ifdef __cplusplus
 }
 #endif

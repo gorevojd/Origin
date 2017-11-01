@@ -1,4 +1,8 @@
 stb_image.h
-gd_wavefront_obj.h
+stb_image_write.h
+gd_math.h
+gd_cryptos.h
+gd_belt.h
+gd_bash.h
 gd_algo.h
-gd_galois.h
+gd.h

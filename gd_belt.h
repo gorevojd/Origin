@@ -66,7 +66,7 @@ NOTES:
 
 #include <stdint.h>
 
-#if 1
+#if 0
 #define GD_BELT_UNPACK_U32(word, str)					\
 	*((str) + 3) = (uint8_t)((word) >> 24);				\
 	*((str) + 2) = (uint8_t)((word) >> 16);				\
@@ -78,7 +78,7 @@ NOTES:
 #endif
 
 
-#if 1
+#if 0
 #define GD_BELT_PACK_U32(str, word)					\
 	*(word) =											\
 		((uint32_t)(*((str) + 3) << 24))	|			\
@@ -236,6 +236,11 @@ NOTES:
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+	enum gdBeltDatawrapResult {
+		GDBeltDataWrap_SUCCESS,
+		GDBeltDataWrap_ERROR
+	};
 
 GDBT_DEF void gd_belt_ecb_encrypt(const uint8_t* bytes, int bytes_count, const uint8_t theta[32], uint8_t* dest);
 GDBT_DEF void gd_belt_ecb_decrypt(const uint8_t* bytes, int bytes_count, const uint8_t theta[32], uint8_t* dest);
@@ -1325,6 +1330,7 @@ void gd_belt_datawrap_set(uint8_t* x, int x_len, uint8_t* i, int i_len, uint8_t 
 void gd_belt_datawrap_unset(){
 
 
+
 }
 
 
@@ -1396,14 +1402,16 @@ static void gd_belt_hash_sigma2(uint8_t x[64], uint8_t dest[32]){
 		bytes_count - length of the message;
 		dest - output pointer where you store the result;
 */
+
 void gd_belt_hash256(const uint8_t* bytes, int bytes_count, uint8_t dest[32]){
 
 	int zeros_to_write = 0;
-	int new_len;
 	int it = 0;
+	int it2 = 0;
 	uint32_t x_long_mod_128 = 0;
-
-	uint8_t* new_msg;
+	uint8_t last_block[32];
+	int32_t last_block_size = 0;
+	uint8_t* curr_block;
 
 	uint8_t s[16];
 	uint32_t hash[8];
@@ -1414,21 +1422,9 @@ void gd_belt_hash256(const uint8_t* bytes, int bytes_count, uint8_t dest[32]){
 	uint8_t temp64[64];
 
 	/*Beginning*/
-	new_len = bytes_count;
-
-	if (bytes_count & 31){
-		zeros_to_write = 32 - bytes_count % 32;
-		new_len += zeros_to_write;
-	}
-
-	new_msg = (uint8_t*)malloc(new_len);
-
-	for (it = 0; it < bytes_count; it++){
-		new_msg[it] = bytes[it];
-	}
-
-	for (it = bytes_count; it < new_len; it++){
-		new_msg[it] = 0;
+	last_block_size = (bytes_count & 31);
+	if (last_block_size){
+		zeros_to_write = 32 - last_block_size;
 	}
 
 	/*First step*/
@@ -1454,9 +1450,25 @@ void gd_belt_hash256(const uint8_t* bytes, int bytes_count, uint8_t dest[32]){
 	GD_BELT_UNPACK_U32(hash[7], hash_bytes + 28);
 	
 	/*Third step*/
-	for(it = 0; it < new_len; it += 32){
+	for(it = 0; it < bytes_count; it += 32){
+
+		if (bytes_count - it >= 32){
+			curr_block = (uint8_t*)(bytes + it);
+		}
+		else{
+			for (it2 = 0; it2 < last_block_size; it2++){
+				last_block[it2] = bytes[it + it2];
+			}
+
+			for (it2; it2 < 32; it2++){
+				last_block[it2] = 0;
+			}
+
+			curr_block = last_block;
+		}
+
 		/*temp64 = Xi ## hash*/
-		GD_BELT_CHUNK256_COPY(temp64, new_msg + it);
+		GD_BELT_CHUNK256_COPY(temp64, curr_block);
 		GD_BELT_CHUNK256_COPY(temp64 + 32, hash_bytes);
 		
 		/*Substep 1*/
@@ -1467,7 +1479,6 @@ void gd_belt_hash256(const uint8_t* bytes, int bytes_count, uint8_t dest[32]){
 		gd_belt_hash_sigma2(temp64, hash_bytes);
 	}
 
-	free(new_msg);
 
 	/*Fourth step*/
 	x_long_mod_128 = (bytes_count << 3);
@@ -1482,6 +1493,63 @@ void gd_belt_hash256(const uint8_t* bytes, int bytes_count, uint8_t dest[32]){
 
 	/*Fifth step*/
 	GD_BELT_CHUNK256_COPY(dest, temp32);
+}
+
+struct gdBeltHashContext{
+	uint8_t* bytes;
+	int bytes_count;
+
+	uint8_t last_block[32];
+	uint8_t hash_bytes[32];
+};
+
+static void gd_belt_start(gdBeltHashContext* state){
+	int it = 0;
+	int it2 = 0;
+	uint32_t x_long_mod_128 = 0;
+	uint8_t last_block[32];
+	int32_t last_block_size = 0;
+	uint8_t* curr_block;
+
+	uint8_t s[16];
+	uint32_t hash[8];
+
+	uint8_t temp16[16];
+	uint8_t temp32[32];
+	uint8_t temp64[64];
+
+	/*Beginning*/
+	last_block_size = (state->bytes_count & 31);
+
+	/*First step*/
+	GD_BELT_CHUNK128_SET_ZERO(s);
+
+	/*Second step*/
+	hash[0] = 0xC8BA94B1;
+	hash[1] = 0x3BF5080A;
+	hash[2] = 0x8E006D36;
+	hash[3] = 0xE45D4A58;
+	hash[4] = 0x9DFA0485;
+	hash[5] = 0xACC7B61B;
+	hash[6] = 0xC2722E25;
+	hash[7] = 0x0DCEFD02;
+
+	GD_BELT_UNPACK_U32(hash[0], state->hash_bytes);
+	GD_BELT_UNPACK_U32(hash[1], state->hash_bytes + 4);
+	GD_BELT_UNPACK_U32(hash[2], state->hash_bytes + 8);
+	GD_BELT_UNPACK_U32(hash[3], state->hash_bytes + 12);
+	GD_BELT_UNPACK_U32(hash[4], state->hash_bytes + 16);
+	GD_BELT_UNPACK_U32(hash[5], state->hash_bytes + 20);
+	GD_BELT_UNPACK_U32(hash[6], state->hash_bytes + 24);
+	GD_BELT_UNPACK_U32(hash[7], state->hash_bytes + 28);
+}
+
+static void gd_belt_update(){
+
+}
+
+static void gd_belt_final(){
+	
 }
 
 /*

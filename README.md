@@ -1,2 +1,0 @@
-# gda
-My programming libraries

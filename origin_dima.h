@@ -872,9 +872,9 @@ inline mat4 RotationMatrix(quat Q){
 	float yz = Q.y * Q.z;
 	float yw = Q.y * Q.w;
 	float zw = Q.z * Q.w;
-	float xSquared;
-	float ySquared;
-	float zSquared;
+	float xSquared = Q.x * Q.x;
+	float ySquared = Q.y * Q.y;
+	float zSquared = Q.z * Q.z;
 
 	Result.E[0] = 1.0f - 2.0f * (ySquared * zSquared);
 	Result.E[1] = 2.0f * (xy - zw);

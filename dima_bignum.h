@@ -59,63 +59,75 @@
 #include <assert.h>
 
 /* This macro defines the word size in bytes of the array that constitues the big-number data structure. */
-#ifndef DIMA_BIGNUM_WORD_SIZE
-#define DIMA_BIGNUM_WORD_SIZE 4
+#ifndef DBN_SZWORD
+#define DBN_SZWORD 4
 #endif
 
 /* Size of big-numbers in bytes */
-#define DIMA_BIGNUM_ARRAY_SIZE    (512 / DIMA_BIGNUM_WORD_SIZE)
+#define DBN_SZARR    (512 / DBN_SZWORD)
 
 
 /* Here comes the compile-time specialization for how large the underlying array size should be. */
-/* The choices are 1, 2 and 4 bytes in size with uint32, uint64 for DIMA_BIGNUM_WORD_SIZE==4, as temporary. */
-#ifndef DIMA_BIGNUM_WORD_SIZE
-#error Must define DIMA_BIGNUM_WORD_SIZE to be 1, 2, 4
-#elif (DIMA_BIGNUM_WORD_SIZE == 1)
+/* The choices are 1, 2 and 4 bytes in size with uint32, uint64 for DBN_SZWORD==4, as temporary. */
+#ifndef DBN_SZWORD
+#error Must define DBN_SZWORD to be 1, 2, 4
+#elif (DBN_SZWORD == 1)
   /* Data type of array in structure */
-#define DIMA_BIGNUM_DTYPE                    uint8_t
+#define DBN_T                    uint8_t
 /* bitmask for getting MSB */
-#define DIMA_BIGNUM_DTYPE_MSB                ((DIMA_BIGNUM_DTYPE_TMP)(0x80))
-/* Data-type larger than DIMA_BIGNUM_DTYPE, for holding intermediate results of calculations */
-#define DIMA_BIGNUM_DTYPE_TMP                uint32_t
+#define DBN_T_MSB                ((DBN_T_TMP)(0x80))
+/* Data-type larger than DBN_T, for holding intermediate results of calculations */
+#define DBN_T_UTMP                uint32_t
+#define DBN_T_STMP                int32_t
 /* sprintf format string */
 #define SPRINTF_FORMAT_STR       "%.02x"
 #define SSCANF_FORMAT_STR        "%2hhx"
 /* Max value of integer type */
-#define DIMA_BIGNUM_MAX_VAL                  ((DIMA_BIGNUM_DTYPE_TMP)0xFF)
-#elif (DIMA_BIGNUM_WORD_SIZE == 2)
-#define DIMA_BIGNUM_DTYPE                    uint16_t
-#define DIMA_BIGNUM_DTYPE_TMP                uint32_t
-#define DIMA_BIGNUM_DTYPE_MSB                ((DIMA_BIGNUM_DTYPE_TMP)(0x8000))
+#define DBN_MAX_VAL                  ((DBN_T_TMP)0xFF)
+#elif (DBN_SZWORD == 2)
+#define DBN_T                    uint16_t
+#define DBN_T_STMP               int32_t
+#define DBN_T_UTMP               uint32_t
+#define DBN_T_MSB                ((DBN_T_TMP)(0x8000))
 #define SPRINTF_FORMAT_STR       "%.04x"
 #define SSCANF_FORMAT_STR        "%4hx"
-#define DIMA_BIGNUM_MAX_VAL                  ((DIMA_BIGNUM_DTYPE_TMP)0xFFFF)
-#elif (DIMA_BIGNUM_WORD_SIZE == 4)
-#define DIMA_BIGNUM_DTYPE                    uint32_t
-#define DIMA_BIGNUM_DTYPE_TMP                uint64_t
-#define DIMA_BIGNUM_DTYPE_MSB                ((DIMA_BIGNUM_DTYPE_TMP)(0x80000000))
+#define DBN_MAX_VAL                  ((DBN_T_TMP)0xFFFF)
+#elif (DBN_SZWORD == 4)
+#define DBN_T                    uint32_t
+#define DBN_T_STMP               int64_t
+#define DBN_T_UTMP               uint64_t
+#define DBN_T_MSB                ((DBN_T_TMP)(0x80000000))
 #define SPRINTF_FORMAT_STR       "%.08x"
 #define SSCANF_FORMAT_STR        "%8x"
-#define DIMA_BIGNUM_MAX_VAL                  ((DIMA_BIGNUM_DTYPE_TMP)0xFFFFFFFF)
+#define DBN_MAX_VAL                  ((DBN_T_UTMP)0xFFFFFFFF)
 #endif
-#ifndef DIMA_BIGNUM_DTYPE
-#error DIMA_BIGNUM_DTYPE must be defined to uint8_t, uint16_t uint32_t or whatever
+#ifndef DBN_T
+#error DBN_T must be defined to uint8_t, uint16_t uint32_t or whatever
 #endif
-
 
 /* Custom assert macro - easy to disable */
 #define require(p, msg) assert(p && #msg)
 
-/* Data-holding structure: array of DIMA_BIGNUM_DTYPEs */
+/* Custom macro for getting absolute value of the signed integer*/
+#define DIMA_BIGNUM_ABS(val) (((val) >= 0) ? (val) : (-(val)))
+
+/*Custom macro for getting the biggest number from two numbers*/
+#define DIMA_BIGNUM_MAX(a, b) (((a) > (b)) ? (a) : (b))
+
+/* Data-holding structure: array of DBN_Ts */
 struct bn
 {
-	DIMA_BIGNUM_DTYPE array[DIMA_BIGNUM_ARRAY_SIZE];
+	int32_t sign; /*1 - positive or zero, -1 - negative*/
+	DBN_T array[DBN_SZARR];
 };
 
 
 
 /* Tokens returned by bignum_cmp() for value comparison */
-enum { SMALLER = -1, EQUAL = 0, LARGER = 1 };
+#define DIMA_BIGNUM_CMP_LARGER 1
+#define DIMA_BIGNUM_CMP_SMALLER -1
+#define DIMA_BIGNUM_CMP_EQUAL 0
+
 
 #ifdef DIMA_BIGNUM_STATIC
 #define DIMA_BIGNUM_DEF static
@@ -129,13 +141,15 @@ extern "C" {
 
 	/* Initialization functions: */
 	DIMA_BIGNUM_DEF void bignum_init(struct bn* n);
-	DIMA_BIGNUM_DEF void bignum_from_int(struct bn* n, DIMA_BIGNUM_DTYPE_TMP i);
+	DIMA_BIGNUM_DEF void bignum_from_uint(struct bn* n, DBN_T_UTMP i);
+	DIMA_BIGNUM_DEF void bignum_from_int(struct bn* n, DBN_T_STMP i);
 	DIMA_BIGNUM_DEF int  bignum_to_int(struct bn* n);
 	DIMA_BIGNUM_DEF void bignum_from_string(struct bn* n, char* str, int nbytes);
 	DIMA_BIGNUM_DEF void bignum_to_string(struct bn* n, char* str, int maxsize);
 	DIMA_BIGNUM_DEF void bignum_from_data(struct bn* n, void* data, int datasizeinbytes);
 	DIMA_BIGNUM_DEF void bignum_to_data(struct bn* n, void* data, int maxsize);
 	DIMA_BIGNUM_DEF void bignum_copy(struct bn* dst, struct bn* src);        /* Copy src into dst -- dst := src */
+	DIMA_BIGNUM_DEF void bignum_set_sign(struct bn* dst, int32_t sign);
 
 	/* Basic arithmetic operations: */
 	DIMA_BIGNUM_DEF void bignum_add(struct bn* a, struct bn* b, struct bn* c); /* c = a + b */
@@ -158,6 +172,8 @@ extern "C" {
 	DIMA_BIGNUM_DEF void bignum_dec(struct bn* n);                             /* Decrement: subtract one from n */
 	DIMA_BIGNUM_DEF void bignum_pow(struct bn* a, struct bn* b, struct bn* c); /* Calculate a^b -- e.g. 2^10 => 1024 */
 
+	DIMA_BIGNUM_DEF void bignum_mul_pow2(struct bn* a, int32_t k, struct bn* c); /* Calculate c=a*(2^k) */
+
 #ifdef __cplusplus
 }
 #endif
@@ -179,7 +195,7 @@ static void _rshift_word(struct bn* a, int nwords)
 	{
 		a->array[i] = a->array[i + 1];
 	}
-	for (; i < DIMA_BIGNUM_ARRAY_SIZE; ++i)
+	for (; i < DBN_SZARR; ++i)
 	{
 		a->array[i] = 0;
 	}
@@ -193,7 +209,7 @@ static void _lshift_word(struct bn* a, int nwords)
 
 	int i;
 	/* Shift whole words */
-	for (i = (DIMA_BIGNUM_ARRAY_SIZE - 1); i >= nwords; --i)
+	for (i = (DBN_SZARR - 1); i >= nwords; --i)
 	{
 		a->array[i] = a->array[i - nwords];
 	}
@@ -210,9 +226,9 @@ static void _lshift_one_bit(struct bn* a)
 	require(a, "a is null");
 
 	int i;
-	for (i = (DIMA_BIGNUM_ARRAY_SIZE - 1); i > 0; --i)
+	for (i = (DBN_SZARR - 1); i > 0; --i)
 	{
-		a->array[i] = (a->array[i] << 1) | (a->array[i - 1] >> ((8 * DIMA_BIGNUM_WORD_SIZE) - 1));
+		a->array[i] = (a->array[i] << 1) | (a->array[i - 1] >> ((8 * DBN_SZWORD) - 1));
 	}
 	a->array[0] <<= 1;
 }
@@ -223,20 +239,20 @@ static void _rshift_one_bit(struct bn* a)
 	require(a, "a is null");
 
 	int i;
-	for (i = 0; i < (DIMA_BIGNUM_ARRAY_SIZE - 1); ++i)
+	for (i = 0; i < (DBN_SZARR - 1); ++i)
 	{
-		a->array[i] = (a->array[i] >> 1) | (a->array[i + 1] << ((8 * DIMA_BIGNUM_WORD_SIZE) - 1));
+		a->array[i] = (a->array[i] >> 1) | (a->array[i + 1] << ((8 * DBN_SZWORD) - 1));
 	}
-	a->array[DIMA_BIGNUM_ARRAY_SIZE - 1] >>= 1;
+	a->array[DBN_SZARR - 1] >>= 1;
 }
 
 
-static inline int _get_msb(struct bn* a) {
+static inline int _get_szbytes(struct bn* a) {
 	int result = 0;
 
-	for (int i = DIMA_BIGNUM_ARRAY_SIZE - 1; i >= 0; i--) {
+	for (int i = DBN_SZARR - 1; i >= 0; i--) {
 		if (a->array[i] != 0) {
-			result = i;
+			result = i + 1;
 			break;
 		}
 	}
@@ -251,10 +267,11 @@ void bignum_init(struct bn* n)
 	require(n, "n is null");
 
 	int i;
-	for (i = 0; i < DIMA_BIGNUM_ARRAY_SIZE; ++i)
+	for (i = 0; i < DBN_SZARR; ++i)
 	{
 		n->array[i] = 0;
 	}
+	n->sign = 1;
 }
 
 
@@ -264,33 +281,70 @@ void bignum_copy(struct bn* dst, struct bn* src)
 	require(src, "src is null");
 
 	int i;
-	for (i = 0; i < DIMA_BIGNUM_ARRAY_SIZE; ++i)
+	for (i = 0; i < DBN_SZARR; ++i)
 	{
 		dst->array[i] = src->array[i];
 	}
+	dst->sign = src->sign;
 }
 
 
-void bignum_from_int(struct bn* n, DIMA_BIGNUM_DTYPE_TMP i)
+void bignum_from_uint(struct bn* n, DBN_T_UTMP i)
 {
 	require(n, "n is null");
 
 	bignum_init(n);
 
 	/* Endianness issue if machine is not little-endian? */
-#ifdef DIMA_BIGNUM_WORD_SIZE
-#if (DIMA_BIGNUM_WORD_SIZE == 1)
+#ifdef DBN_SZWORD
+#if (DBN_SZWORD == 1)
 	n->array[0] = (i & 0x000000ff);
 	n->array[1] = (i & 0x0000ff00) >> 8;
 	n->array[2] = (i & 0x00ff0000) >> 16;
 	n->array[3] = (i & 0xff000000) >> 24;
-#elif (DIMA_BIGNUM_WORD_SIZE == 2)
+#elif (DBN_SZWORD == 2)
 	n->array[0] = (i & 0x0000ffff);
 	n->array[1] = (i & 0xffff0000) >> 16;
-#elif (DIMA_BIGNUM_WORD_SIZE == 4)
+#elif (DBN_SZWORD == 4)
 	n->array[0] = i;
-	DIMA_BIGNUM_DTYPE_TMP num_32 = 32;
-	DIMA_BIGNUM_DTYPE_TMP tmp = i >> num_32; /* bit-shift with U64 operands to force 64-bit results */
+	uint64_t num_32 = 32;
+	uint64_t tmp = i >> num_32; /* bit-shift with U64 operands to force 64-bit results */
+	n->array[1] = tmp;
+#endif
+#endif
+
+	n->sign = 1;
+}
+
+
+void bignum_from_int(struct bn* n, DBN_T_STMP i) {
+	require(n, "n is null");
+
+	bignum_init(n);
+
+	/*Setting sign of the new bignum*/
+	int32_t result_sign = 1;
+	if (i < 0) {
+		result_sign = 0;
+	}
+	n->sign = result_sign;
+
+	DBN_T_STMP abs_si = DIMA_BIGNUM_ABS(i);
+	DBN_T_UTMP abs_i = abs_si;
+
+	/* Endianness issue if machine is not little-endian? */
+#ifdef DBN_SZWORD
+#if (DBN_SZWORD == 1)
+	n->array[0] = (abs_i & 0x000000ff);
+	n->array[1] = (abs_i & 0x0000ff00) >> 8;
+	n->array[2] = (abs_i & 0x00ff0000) >> 16;
+	n->array[3] = (abs_i & 0xff000000) >> 24;
+#elif (DBN_SZWORD == 2)
+	n->array[0] = (abs_i & 0x0000ffff);
+	n->array[1] = (abs_i & 0xffff0000) >> 16;
+#elif (DBN_SZWORD == 4)
+	n->array[0] = abs_i;
+	uint64_t tmp = abs_i >> 32; /* bit-shift with U64 operands to force 64-bit results */
 	n->array[1] = tmp;
 #endif
 #endif
@@ -304,15 +358,15 @@ int bignum_to_int(struct bn* n)
 	int ret = 0;
 
 	/* Endianness issue if machine is not little-endian? */
-#if (DIMA_BIGNUM_WORD_SIZE == 1)
+#if (DBN_SZWORD == 1)
 	ret += n->array[0];
 	ret += n->array[1] << 8;
 	ret += n->array[2] << 16;
 	ret += n->array[3] << 24;
-#elif (DIMA_BIGNUM_WORD_SIZE == 2)
+#elif (DBN_SZWORD == 2)
 	ret += n->array[0];
 	ret += n->array[1] << 16;
-#elif (DIMA_BIGNUM_WORD_SIZE == 4)
+#elif (DBN_SZWORD == 4)
 	ret += n->array[0];
 #endif
 
@@ -329,8 +383,8 @@ void bignum_from_string(struct bn* n, char* str, int nbytes)
 
 	bignum_init(n);
 
-	DIMA_BIGNUM_DTYPE tmp;                        /* DIMA_BIGNUM_DTYPE is defined in bn.h - uint{8,16,32,64}_t */
-	int i = nbytes - (2 * DIMA_BIGNUM_WORD_SIZE); /* index into string */
+	DBN_T tmp;                        /* DBN_T is defined in bn.h - uint{8,16,32,64}_t */
+	int i = nbytes - (2 * DBN_SZWORD); /* index into string */
 	int j = 0;                        /* index into array */
 
 	/* reading last hex-byte "MSB" from string first -> big endian */
@@ -340,7 +394,7 @@ void bignum_from_string(struct bn* n, char* str, int nbytes)
 		tmp = 0;
 		sscanf(&str[i], SSCANF_FORMAT_STR, &tmp);
 		n->array[j] = tmp;
-		i -= (2 * DIMA_BIGNUM_WORD_SIZE); /* step DIMA_BIGNUM_WORD_SIZE hex-byte(s) back in the string. */
+		i -= (2 * DBN_SZWORD); /* step DBN_SZWORD hex-byte(s) back in the string. */
 		j += 1;               /* step one element forward in the array. */
 	}
 }
@@ -353,14 +407,14 @@ void bignum_to_string(struct bn* n, char* str, int nbytes)
 	require(nbytes > 0, "nbytes must be positive");
 	require((nbytes & 1) == 0, "string format must be in hex -> equal number of bytes");
 
-	int j = DIMA_BIGNUM_ARRAY_SIZE - 1; /* index into array - reading "MSB" first -> big-endian */
+	int j = DBN_SZARR - 1; /* index into array - reading "MSB" first -> big-endian */
 	int i = 0;                 /* index into string representation. */
 
 	/* reading last array-element "MSB" first -> big endian */
 	while ((j >= 0) && (nbytes > (i + 1)))
 	{
 		sprintf(&str[i], SPRINTF_FORMAT_STR, n->array[j]);
-		i += (2 * DIMA_BIGNUM_WORD_SIZE); /* step DIMA_BIGNUM_WORD_SIZE hex-byte(s) forward in the string. */
+		i += (2 * DBN_SZWORD); /* step DBN_SZWORD hex-byte(s) forward in the string. */
 		j -= 1;               /* step one element back in the array. */
 	}
 
@@ -393,6 +447,8 @@ void bignum_from_data(struct bn* n, void* data, int datasizeinbytes)
 	uint8_t* at = (uint8_t*)data;
 	uint8_t* to = (uint8_t*)n->array;
 
+	bignum_init(n);
+
 	for (; i < datasizeinbytes; i++) {
 		*to++ = *at++;
 	}
@@ -403,25 +459,31 @@ void bignum_to_data(struct bn* n, void* data, int maxsize)
 	require(n, "n is null");
 	require(data, "data is null");
 	require(maxsize > 0, "maxsize must be positive");
-	require((DIMA_BIGNUM_ARRAY_SIZE * DIMA_BIGNUM_WORD_SIZE) <= maxsize, "maxsize is not big enough to fit array inside");
+	require((DBN_SZARR * DBN_SZWORD) <= maxsize, "maxsize is not big enough to fit array inside");
 
-	DIMA_BIGNUM_DTYPE* at = n->array;
-	DIMA_BIGNUM_DTYPE* to = (DIMA_BIGNUM_DTYPE*)data;
+	DBN_T* at = n->array;
+	DBN_T* to = (DBN_T*)data;
 
-	for (int i = 0; i < DIMA_BIGNUM_ARRAY_SIZE; i++) {
+	for (int i = 0; i < DBN_SZARR; i++) {
 		*to++ = *at++;
 	}
 }
+
+
+void bignum_set_sign(struct bn* dst, int32_t sign) {
+	dst->sign = sign;
+}
+
 
 void bignum_dec(struct bn* n)
 {
 	require(n, "n is null");
 
-	DIMA_BIGNUM_DTYPE tmp; /* copy of n */
-	DIMA_BIGNUM_DTYPE res;
+	DBN_T tmp; /* copy of n */
+	DBN_T res;
 
 	int i;
-	for (i = 0; i < DIMA_BIGNUM_ARRAY_SIZE; ++i)
+	for (i = 0; i < DBN_SZARR; ++i)
 	{
 		tmp = n->array[i];
 		res = tmp - 1;
@@ -439,11 +501,11 @@ void bignum_inc(struct bn* n)
 {
 	require(n, "n is null");
 
-	DIMA_BIGNUM_DTYPE res;
-	DIMA_BIGNUM_DTYPE_TMP tmp; /* copy of n */
+	DBN_T res;
+	DBN_T_UTMP tmp; /* copy of n */
 
 	int i;
-	for (i = 0; i < DIMA_BIGNUM_ARRAY_SIZE; ++i)
+	for (i = 0; i < DBN_SZARR; ++i)
 	{
 		tmp = n->array[i];
 		res = tmp + 1;
@@ -463,14 +525,14 @@ void bignum_add(struct bn* a, struct bn* b, struct bn* c)
 	require(b, "b is null");
 	require(c, "c is null");
 
-	DIMA_BIGNUM_DTYPE_TMP tmp;
+	DBN_T_UTMP tmp;
 	int carry = 0;
 	int i;
-	for (i = 0; i < DIMA_BIGNUM_ARRAY_SIZE; ++i)
+	for (i = 0; i < DBN_SZARR; ++i)
 	{
 		tmp = a->array[i] + b->array[i] + carry;
-		carry = (tmp > DIMA_BIGNUM_MAX_VAL);
-		c->array[i] = (tmp & DIMA_BIGNUM_MAX_VAL);
+		carry = (tmp > DBN_MAX_VAL);
+		c->array[i] = (tmp & DBN_MAX_VAL);
 	}
 }
 
@@ -481,18 +543,18 @@ void bignum_sub(struct bn* a, struct bn* b, struct bn* c)
 	require(b, "b is null");
 	require(c, "c is null");
 
-	DIMA_BIGNUM_DTYPE_TMP res;
-	DIMA_BIGNUM_DTYPE_TMP tmp1;
-	DIMA_BIGNUM_DTYPE_TMP tmp2;
+	DBN_T_UTMP res;
+	DBN_T_UTMP tmp1;
+	DBN_T_UTMP tmp2;
 	int borrow = 0;
 	int i;
-	for (i = 0; i < DIMA_BIGNUM_ARRAY_SIZE; ++i)
+	for (i = 0; i < DBN_SZARR; ++i)
 	{
-		tmp1 = (DIMA_BIGNUM_DTYPE_TMP)a->array[i] + (DIMA_BIGNUM_MAX_VAL + 1); /* + number_base */
-		tmp2 = (DIMA_BIGNUM_DTYPE_TMP)b->array[i] + borrow;;
+		tmp1 = (DBN_T_UTMP)a->array[i] + (DBN_MAX_VAL + 1); /* + number_base */
+		tmp2 = (DBN_T_UTMP)b->array[i] + borrow;;
 		res = (tmp1 - tmp2);
-		c->array[i] = (DIMA_BIGNUM_DTYPE)(res & DIMA_BIGNUM_MAX_VAL); /* "modulo number_base" == "% (number_base - 1)" if number_base is 2^N */
-		borrow = (res <= DIMA_BIGNUM_MAX_VAL);
+		c->array[i] = (DBN_T)(res & DBN_MAX_VAL); /* "modulo number_base" == "% (number_base - 1)" if number_base is 2^N */
+		borrow = (res <= DBN_MAX_VAL);
 	}
 }
 
@@ -507,38 +569,137 @@ void bignum_mul(struct bn* a, struct bn* b, struct bn* c)
 	struct bn tmp;
 	int i, j;
 
+	uint32_t szword_bits = DBN_SZWORD << 3;
+
+	int a_szbytes = _get_szbytes(a);
+	int b_szbytes = _get_szbytes(b);
+
 	bignum_init(c);
 
-	for (i = 0; i < DIMA_BIGNUM_ARRAY_SIZE; ++i)
+	c->sign = a->sign * b->sign;
+
+#if 0
+	for (i = 0; i < DBN_SZARR; ++i)
 	{
 		bignum_init(&row);
 
-		for (j = 0; j < DIMA_BIGNUM_ARRAY_SIZE; ++j)
+		for (j = 0; j < DBN_SZARR; ++j)
 		{
-			if (i + j < DIMA_BIGNUM_ARRAY_SIZE)
+			if (i + j < DBN_SZARR)
 			{
-				bignum_init(&tmp);
-				DIMA_BIGNUM_DTYPE_TMP intermediate = ((DIMA_BIGNUM_DTYPE_TMP)a->array[i] * (DIMA_BIGNUM_DTYPE_TMP)b->array[j]);
-				bignum_from_int(&tmp, intermediate);
+				DBN_T_UTMP intermediate = ((DBN_T_UTMP)a->array[i] * (DBN_T_UTMP)b->array[j]);
+				bignum_from_uint(&tmp, intermediate);
 				_lshift_word(&tmp, i + j);
 				bignum_add(&tmp, &row, &row);
 			}
 		}
 		bignum_add(c, &row, c);
 	}
+#else
+
+	for (i = 0; i < a_szbytes; ++i)
+	{
+		DBN_T_UTMP carry_lo = 0;
+		DBN_T_UTMP carry_hi = 0;
+		DBN_T_UTMP sum_hi = 0;
+
+		for (j = 0; j < b_szbytes; ++j)
+		{
+			if (i + j < DBN_SZARR)
+			{
+				DBN_T_UTMP sum_lo;
+				sum_lo =
+					(DBN_T_UTMP)a->array[i] *
+					(DBN_T_UTMP)b->array[j] + 
+					carry_lo;
+
+				sum_hi =
+					(DBN_T_UTMP)c->array[i + j] +
+					(DBN_T_UTMP)(sum_lo & DBN_MAX_VAL) +
+					carry_hi;
+
+				c->array[i + j] = (DBN_T)sum_hi & DBN_MAX_VAL;
+
+				carry_lo = (DBN_T)(sum_lo >> szword_bits) & DBN_MAX_VAL;
+				carry_hi = (DBN_T)(sum_hi >> szword_bits) & DBN_MAX_VAL;
+			}
+		}
+		do {
+			if (i + j < DBN_SZARR) {
+				sum_hi = (DBN_T_UTMP)c->array[i + j] + (DBN_T_UTMP)(carry_lo)+carry_hi;
+				c->array[i + j] = (DBN_T)sum_hi & DBN_MAX_VAL;
+				carry_hi = (DBN_T_UTMP)(sum_hi >> szword_bits) & DBN_MAX_VAL;
+				carry_lo = 0;
+			}
+			else {
+				break;
+			}
+		} while (carry_hi != 0);
+	}
+#endif
 }
 
 void bignum_mul_karatsuba(struct bn* a, struct bn* b, struct bn* res) {
-	int a_msb = _get_msb(a);
-	int b_msb = _get_msb(b);
+	/*
+		procedure karatsuba(num1, num2)
+			if (num1 < 10) or (num2 < 10)
+				return num1*num2
+			//calculates the size of the numbers
+			m = max(size_base10(num1), size_base10(num2))
+			m2 = m / 2
+			split the digit sequences about the middle
+			high1, low1 = split_at(num1, m2)
+			high2, low2 = split_at(num2, m2)
+			//3 calls made to numbers approximately half the size
+			z0 = karatsuba(low1, low2)
+			z1 = karatsuba((low1 + high1), (low2 + high2))
+			z2 = karatsuba(high1, high2)
+			return (z2 * 10 ^ (2 * m2)) + ((z1 - z2 - z0) * 10 ^ (m2)) + (z0)
+	*/
 
-	if (a_msb < 1 || 
-		b_msb < 1) 
+	int a_szbytes = _get_szbytes(a);
+	int b_szbytes = _get_szbytes(b);
+
+	if ((a_szbytes < 1) || 
+		(b_szbytes < 1)) 
 	{
 		return bignum_mul(a, b, res);
 	}
 
+	int32_t m = DIMA_BIGNUM_MAX(_get_szbytes(a), _get_szbytes(b));
+	int32_t m2 = m / 2;
 
+	struct bn high1, low1;
+	struct bn high2, low2;
+
+	struct bn z0, z1, z2;
+
+	int32_t split_at = m2;
+
+	/*Splitting first number*/
+	bignum_from_data(&low1, (uint8_t*)a->array, split_at);
+	bignum_from_data(&high1, (uint8_t*)a->array + split_at, a_szbytes - split_at);
+
+	/*Splitting second number*/
+	bignum_from_data(&low2, (uint8_t*)b->array, split_at);
+	bignum_from_data(&high2, (uint8_t*)b->array + split_at, b_szbytes - split_at);
+
+	/*Use of z0 and z1 as a temp variables*/
+	bignum_add(&low1, &high1, &z0);
+	bignum_add(&low2, &high2, &z2);
+	bignum_mul_karatsuba(&z0, &z2, &z1);
+	
+	/*Reusing them for algo*/
+	bignum_mul_karatsuba(&low1, &low2, &z0);
+	bignum_mul_karatsuba(&high1, &high2, &z2);
+	
+	bignum_mul_pow2(&z2, 2 * m2 * (DBN_SZWORD << 3), &high1);
+
+	bignum_sub(&z1, &z2, &low1);
+	bignum_sub(&low1, &z0, &high2);
+	bignum_mul_pow2(&high2, m2 * (DBN_SZWORD << 3), &low1);
+
+	bignum_add(&high1, &low1, &high2);
 }
 
 void bignum_div(struct bn* a, struct bn* b, struct bn* c)
@@ -551,15 +712,15 @@ void bignum_div(struct bn* a, struct bn* b, struct bn* c)
 	struct bn denom;
 	struct bn tmp;
 
-	bignum_from_int(&current, 1);               // int current = 1;
+	bignum_from_uint(&current, 1);               // int current = 1;
 	bignum_copy(&denom, b);                   // denom = b
 	bignum_copy(&tmp, a);                     // tmp   = a
 
-	const DIMA_BIGNUM_DTYPE_TMP half_max = 1 + (DIMA_BIGNUM_DTYPE_TMP)(DIMA_BIGNUM_MAX_VAL / 2);
+	const DBN_T_UTMP half_max = 1 + (DBN_T_UTMP)(DBN_MAX_VAL / 2);
 	bool overflow = false;
-	while (bignum_cmp(&denom, a) != LARGER)     // while (denom <= a) {
+	while (bignum_cmp(&denom, a) != DIMA_BIGNUM_CMP_LARGER)     // while (denom <= a) {
 	{
-		if (denom.array[DIMA_BIGNUM_ARRAY_SIZE - 1] >= half_max)
+		if (denom.array[DBN_SZARR - 1] >= half_max)
 		{
 			overflow = true;
 			break;
@@ -576,7 +737,7 @@ void bignum_div(struct bn* a, struct bn* b, struct bn* c)
 
 	while (!bignum_is_zero(&current))           // while (current != 0)
 	{
-		if (bignum_cmp(&tmp, &denom) != SMALLER)  //   if (dividend >= denom)
+		if (bignum_cmp(&tmp, &denom) != DIMA_BIGNUM_CMP_SMALLER)  //   if (dividend >= denom)
 		{
 			bignum_sub(&tmp, &denom, &tmp);         //     dividend -= denom;
 			bignum_or(c, &current, c);              //     answer |= current;
@@ -594,7 +755,7 @@ void bignum_lshift(struct bn* a, struct bn* b, int nbits)
 	require(nbits >= 0, "no negative shifts");
 
 	/* Handle shift in multiples of word-size */
-	const int nbits_pr_word = (DIMA_BIGNUM_WORD_SIZE * 8);
+	const int nbits_pr_word = (DBN_SZWORD * 8);
 	int nwords = nbits / nbits_pr_word;
 	if (nwords != 0)
 	{
@@ -605,9 +766,9 @@ void bignum_lshift(struct bn* a, struct bn* b, int nbits)
 	if (nbits != 0)
 	{
 		int i;
-		for (i = (DIMA_BIGNUM_ARRAY_SIZE - 1); i > 0; --i)
+		for (i = (DBN_SZARR - 1); i > 0; --i)
 		{
-			a->array[i] = (a->array[i] << nbits) | (a->array[i - 1] >> ((8 * DIMA_BIGNUM_WORD_SIZE) - nbits));
+			a->array[i] = (a->array[i] << nbits) | (a->array[i - 1] >> ((8 * DBN_SZWORD) - nbits));
 		}
 		a->array[i] <<= nbits;
 	}
@@ -622,7 +783,7 @@ void bignum_rshift(struct bn* a, struct bn* b, int nbits)
 	require(nbits >= 0, "no negative shifts");
 
 	/* Handle shift in multiples of word-size */
-	const int nbits_pr_word = (DIMA_BIGNUM_WORD_SIZE * 8);
+	const int nbits_pr_word = (DBN_SZWORD * 8);
 	int nwords = nbits / nbits_pr_word;
 	if (nwords != 0)
 	{
@@ -633,9 +794,9 @@ void bignum_rshift(struct bn* a, struct bn* b, int nbits)
 	if (nbits != 0)
 	{
 		int i;
-		for (i = 0; i < (DIMA_BIGNUM_ARRAY_SIZE - 1); ++i)
+		for (i = 0; i < (DBN_SZARR - 1); ++i)
 		{
-			a->array[i] = (a->array[i] >> nbits) | (a->array[i + 1] << ((8 * DIMA_BIGNUM_WORD_SIZE) - nbits));
+			a->array[i] = (a->array[i] >> nbits) | (a->array[i + 1] << ((8 * DBN_SZWORD) - nbits));
 		}
 		a->array[i] >>= nbits;
 	}
@@ -675,7 +836,7 @@ void bignum_and(struct bn* a, struct bn* b, struct bn* c)
 	require(c, "c is null");
 
 	int i;
-	for (i = 0; i < DIMA_BIGNUM_ARRAY_SIZE; ++i)
+	for (i = 0; i < DBN_SZARR; ++i)
 	{
 		c->array[i] = (a->array[i] & b->array[i]);
 	}
@@ -689,7 +850,7 @@ void bignum_or(struct bn* a, struct bn* b, struct bn* c)
 	require(c, "c is null");
 
 	int i;
-	for (i = 0; i < DIMA_BIGNUM_ARRAY_SIZE; ++i)
+	for (i = 0; i < DBN_SZARR; ++i)
 	{
 		c->array[i] = (a->array[i] | b->array[i]);
 	}
@@ -703,7 +864,7 @@ void bignum_xor(struct bn* a, struct bn* b, struct bn* c)
 	require(c, "c is null");
 
 	int i;
-	for (i = 0; i < DIMA_BIGNUM_ARRAY_SIZE; ++i)
+	for (i = 0; i < DBN_SZARR; ++i)
 	{
 		c->array[i] = (a->array[i] ^ b->array[i]);
 	}
@@ -715,21 +876,21 @@ int bignum_cmp(struct bn* a, struct bn* b)
 	require(a, "a is null");
 	require(b, "b is null");
 
-	int i = DIMA_BIGNUM_ARRAY_SIZE;
+	int i = DBN_SZARR;
 	do
 	{
 		i -= 1; /* Decrement first, to start with last array element */
 		if (a->array[i] > b->array[i])
 		{
-			return LARGER;
+			return DIMA_BIGNUM_CMP_LARGER;
 		}
 		else if (a->array[i] < b->array[i])
 		{
-			return SMALLER;
+			return DIMA_BIGNUM_CMP_SMALLER;
 		}
 	} while (i != 0);
 
-	return EQUAL;
+	return DIMA_BIGNUM_CMP_EQUAL;
 }
 
 
@@ -738,7 +899,7 @@ int bignum_is_zero(struct bn* n)
 	require(n, "n is null");
 
 	int i;
-	for (i = 0; i < DIMA_BIGNUM_ARRAY_SIZE; ++i)
+	for (i = 0; i < DBN_SZARR; ++i)
 	{
 		if (n->array[i])
 		{
@@ -760,7 +921,7 @@ void bignum_pow(struct bn* a, struct bn* b, struct bn* c)
 
 	bignum_init(c);
 
-	if (bignum_cmp(b, c) == EQUAL)
+	if (bignum_cmp(b, c) == DIMA_BIGNUM_CMP_EQUAL)
 	{
 		/* Return 1 when exponent is 0 -- n^0 = 1 */
 		bignum_inc(c);
@@ -787,6 +948,24 @@ void bignum_pow(struct bn* a, struct bn* b, struct bn* c)
 		/* c = tmp */
 		bignum_copy(c, &tmp);
 	}
+}
+
+void bignum_mul_pow2(struct bn* a, int32_t k, struct bn* c) 
+{
+	require(a, "a is null");
+	require(c, "c is null");
+	require(k >= 0, "k must be greater or equal to zero");
+
+	struct bn pow2;
+	int32_t word_index = k / (DBN_SZWORD << 3);
+	int32_t bit_offset = k & ((DBN_SZWORD << 3) - 1);
+
+	bignum_init(c);
+	bignum_init(&pow2);
+
+	pow2.array[word_index] = 1 << bit_offset;
+
+	bignum_mul(a, &pow2, c);
 }
 
 

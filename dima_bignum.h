@@ -440,7 +440,7 @@ void bignum_from_data(struct bn* n, void* data, int datasizeinbytes)
 {
 	require(n, "n is null");
 	require(data, "data is null");
-	require(datasizeinbytes > 0, "data size must be positive");
+	//require(datasizeinbytes > 0, "data size must be positive");
 
 	int i = 0;
 
@@ -570,6 +570,7 @@ void bignum_mul(struct bn* a, struct bn* b, struct bn* c)
 	int i, j;
 
 	uint32_t szword_bits = DBN_SZWORD << 3;
+	DBN_T_UTMP max_val = DBN_MAX_VAL;
 
 	int a_szbytes = _get_szbytes(a);
 	int b_szbytes = _get_szbytes(b);
@@ -596,7 +597,6 @@ void bignum_mul(struct bn* a, struct bn* b, struct bn* c)
 		bignum_add(c, &row, c);
 	}
 #else
-
 	for (i = 0; i < a_szbytes; ++i)
 	{
 		DBN_T_UTMP carry_lo = 0;
@@ -605,8 +605,7 @@ void bignum_mul(struct bn* a, struct bn* b, struct bn* c)
 
 		for (j = 0; j < b_szbytes; ++j)
 		{
-			if (i + j < DBN_SZARR)
-			{
+			if (i + j < DBN_SZARR){
 				DBN_T_UTMP sum_lo;
 				sum_lo =
 					(DBN_T_UTMP)a->array[i] *
@@ -615,20 +614,20 @@ void bignum_mul(struct bn* a, struct bn* b, struct bn* c)
 
 				sum_hi =
 					(DBN_T_UTMP)c->array[i + j] +
-					(DBN_T_UTMP)(sum_lo & DBN_MAX_VAL) +
+					(DBN_T_UTMP)(sum_lo & max_val) +
 					carry_hi;
 
-				c->array[i + j] = (DBN_T)sum_hi & DBN_MAX_VAL;
+				c->array[i + j] = (DBN_T)sum_hi & max_val;
 
-				carry_lo = (DBN_T)(sum_lo >> szword_bits) & DBN_MAX_VAL;
-				carry_hi = (DBN_T)(sum_hi >> szword_bits) & DBN_MAX_VAL;
+				carry_lo = (DBN_T)(sum_lo >> szword_bits) & max_val;
+				carry_hi = (DBN_T)(sum_hi >> szword_bits) & max_val;
 			}
 		}
 		do {
 			if (i + j < DBN_SZARR) {
 				sum_hi = (DBN_T_UTMP)c->array[i + j] + (DBN_T_UTMP)(carry_lo)+carry_hi;
-				c->array[i + j] = (DBN_T)sum_hi & DBN_MAX_VAL;
-				carry_hi = (DBN_T_UTMP)(sum_hi >> szword_bits) & DBN_MAX_VAL;
+				c->array[i + j] = (DBN_T)sum_hi & max_val;
+				carry_hi = (DBN_T_UTMP)(sum_hi >> szword_bits) & max_val;
 				carry_lo = 0;
 			}
 			else {
@@ -660,8 +659,8 @@ void bignum_mul_karatsuba(struct bn* a, struct bn* b, struct bn* res) {
 	int a_szbytes = _get_szbytes(a);
 	int b_szbytes = _get_szbytes(b);
 
-	if ((a_szbytes < 1) || 
-		(b_szbytes < 1)) 
+	if ((a_szbytes <= 1) || 
+		(b_szbytes <= 1)) 
 	{
 		return bignum_mul(a, b, res);
 	}

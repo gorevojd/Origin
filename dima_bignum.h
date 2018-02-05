@@ -625,9 +625,9 @@ void bignum_mul(struct bn* a, struct bn* b, struct bn* c)
 		}
 		do {
 			if (i + j < DBN_SZARR) {
-				sum_hi = (DBN_T_UTMP)c->array[i + j] + (DBN_T_UTMP)(carry_lo)+carry_hi;
-				c->array[i + j] = (DBN_T)sum_hi & max_val;
-				carry_hi = (DBN_T_UTMP)(sum_hi >> szword_bits) & max_val;
+				sum_hi = (DBN_T_UTMP)c->array[i + j] + carry_lo + carry_hi;
+				c->array[i + j] = sum_hi & max_val;
+				carry_hi = (sum_hi >> szword_bits) & max_val;
 				carry_lo = 0;
 			}
 			else {
@@ -878,7 +878,7 @@ int bignum_cmp(struct bn* a, struct bn* b)
 	int i = DBN_SZARR;
 	do
 	{
-		i -= 1; /* Decrement first, to start with last array element */
+		--i; /* Decrement first, to start with last array element */
 		if (a->array[i] > b->array[i])
 		{
 			return DIMA_BIGNUM_CMP_LARGER;

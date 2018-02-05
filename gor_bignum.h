@@ -67,18 +67,24 @@
 #define gorbn_utmp_t uint32_t
 #define gorbn_stmp_t int32_t
 #define GORBN_MAX_VAL 0xFF
+#define GORBN_SZWORD_BITS 8
+#define GORBN_SZWORD_BITS_MINUS_ONE 7
 
 #elif (GORBN_SZWORD == 2)
 #define gorbn_t uint16_t
 #define gorbn_utmp_t uint32_t
 #define gorbn_stmp_t int32_t
 #define GORBN_MAX_VAL 0xFFFF
+#define GORBN_SZWORD_BITS 16
+#define GORBN_SZWORD_BITS_MINUS_ONE 15
 
 #elif (GORBN_SZWORD == 4)
 #define gorbn_t uint32_t
 #define gorbn_utmp_t uint64_t
 #define gorbn_stmp_t int64_t
 #define GORBN_MAX_VAL 0xFFFFFFFF
+#define GORBN_SZWORD_BITS 32
+#define GORBN_SZWORD_BITS_MINUS_ONE 31
 
 #elif
 #error GORBN_SZWORD must be defined to 1, 2 or 4
@@ -146,7 +152,7 @@ GORBN_DEF void gorbn_rshift(gorbn_bignum* r, gorbn_bignum* b, int nbits); /* r =
 GORBN_DEF int gorbn_cmp(gorbn_bignum* a, gorbn_bignum* b);
 GORBN_DEF int gorbn_cmp_mod(gorbn_bignum* a, gorbn_bignum* b);
 GORBN_DEF int gorbn_cmp_zero(gorbn_bignum* a);
-GORBN_DEF int gorbn_is_zero(gorbn_bignum* a, gorbn_bignum* b);
+GORBN_DEF int gorbn_is_zero(gorbn_bignum* a);
 
 
 #ifdef __cplusplus
@@ -257,6 +263,67 @@ void gorbn_to_data(void* data, uint32_t data_size, gorbn_bignum* n){
 	}
 }
 
+static inline void _gorbn_lshift_one_bit(gorbn_bignum* a) {
+	GORBN_ASSERT(a);
+
+	int i;
+	for (i = (GORBN_SZARR - 1); i > 0; --i) {
+		a->number[i] = (a->number[i] << 1) | (a->number[i - 1] >> GORBN_SZWORD_BITS_MINUS_ONE);
+	}
+	a->number[0] <<= 1;
+}
+
+static inline void _gorbn_rshift_one_bit(gorbn_bignum* a) {
+	GORBN_ASSERT(a);
+
+	int i;
+	for (i = 0; i < (GORBN_SZARR - 1); i++) {
+		a->number[i] = (a->number[i] >> 1) | (a->number[i + 1] << GORBN_SZWORD_BITS_MINUS_ONE);
+	}
+	a->number[GORBN_SZARR - 1] >>= 1;
+}
+
+static inline void _gorbn_lshift_word(gorbn_bignum* a, int nwords) {
+	GORBN_ASSERT(a);
+	GORBN_ASSERT(nwords >= 0);
+
+	int i;
+	for (i = (GORBN_SZARR - 1); i >= nwords; i--) {
+		a->number[i] = a->number[i - nwords];
+	}
+
+	for (; i >= 0; --i) {
+		a->number[i] = 0;
+	}
+}
+
+static inline void _gorbn_rshift_word(gorbn_bignum* a, int nwords) {
+	GORBN_ASSERT(a);
+	GORBN_ASSERT(nwords >= 0);
+
+	int i;
+	for (i = 0; i < nwords; i++) {
+		a->number[i] = a->number[i + nwords];
+	}
+
+	for (; i < GORBN_SZARR; i++) {
+		a->number[i] = 0;
+	}
+}
+
+static inline int _gorbn_get_szbytes(gorbn_bignum* a) {
+	int result = 0;
+
+	for (int i = GORBN_SZARR - 1; i >= 0; i--) {
+		if (a->number[i] != 0) {
+			result = i + 1;
+			break;
+		}
+	}
+
+	return(result);
+}
+
 static inline void _gorbn_internal_addition(
 	gorbn_bignum* dst,
 	gorbn_bignum* a, int a_sign,
@@ -330,6 +397,155 @@ void gorbn_sub(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b){
 	_gorbn_internal_addition(r, a, a->sign, b, b->sign * -1);
 }
 
+void gorbn_mul(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(a);
+	GORBN_ASSERT(B);
+
+	int i, j;
+	int a_szbytes;
+	int b_szbytes;
+
+	a_szbytes = _gorbn_get_szbytes(a);
+	b_szbytes = _gorbn_get_szbytes(b);
+
+	gorbn_bignum buf;
+	gorbn_init(&buf);
+	
+	for (i = 0; i < a_szbytes; ++i) {
+		gorbn_utmp_t carry_lo = 0;
+		gorbn_utmp_t carry_hi = 0;
+		gorbn_utmp_t sum_hi = 0;
+		gorbn_utmp_t sum_lo;
+
+		for (j = 0; j < b_szbytes; ++j) {
+			sum_lo =
+				(gorbn_utmp_t)a->number[i] *
+				(gorbn_utmp_t)b->number[j] +
+				carry_lo;
+
+			sum_hi =
+				(gorbn_utmp_t)buf.number[i + j] +
+				(sum_lo & GORBN_MAX_VAL) +
+				carry_hi;
+
+			buf.number[i + j] = sum_hi & GORBN_MAX_VAL;
+
+			carry_lo = (sum_lo >> GORBN_SZWORD_BITS) & GORBN_MAX_VAL;
+			carry_hi = (sum_hi >> GORBN_SZWORD_BITS) & GORBN_MAX_VAL;
+		}
+
+		/* Continue processing carry values */
+#if 0
+		do {
+			/*TODO: Should we increment here????*/
+			sum_hi = (gorbn_utmp_t)buf.number[i + j] + carry_lo + carry_hi;
+			buf.number[i + j] = sum_hi & GORBN_MAX_VAL;
+			carry_hi = (sum_hi >> GORBN_SZWORD_BITS) & GORBN_MAX_VAL;
+			carry_lo = 0;
+		} while (carry_hi != 0);
+#else
+		sum_hi = (gorbn_utmp_t)buf.number[i + j] + carry_lo + carry_hi;
+		buf.number[i + j] = sum_hi & GORBN_MAX_VAL;
+#endif
+	}
+
+	gorbn_copy(r, &buf);
+}
+
+void gorbn_div(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(a);
+	GORBN_ASSERT(b);
+
+	gorbn_bignum current, denom, tmp;
+
+	gorbn_from_uint(&current, 1);
+	gorbn_copy(&denom, b);
+	gorbn_copy(&tmp, a);
+
+	gorbn_utmp_t half_max = 1 + (GORBN_MAX_VAL >> 1);
+	int overflow = 0;
+	while (gorbn_cmp(&denom, a) != GORBN_CMP_LARGER) {
+		if (denom.number[GORBN_SZARR - 1] >= half_max) {
+			overflow = 1;
+			break;
+		}
+		_gorbn_lshift_one_bit(&current);
+		_gorbn_lshift_one_bit(&denom);
+	}
+
+	if (!overflow) {
+		_gorbn_rshift_one_bit(&denom);
+		_gorbn_rshift_one_bit(&current);
+	}
+
+	gorbn_init(r);
+
+	while (!gorbn_is_zero(&current)) {
+		if (gorbn_cmp(&tmp, &denom) != GORBN_CMP_SMALLER) {
+			gorbn_sub(&tmp, &tmp, &denom);
+			gorbn_or(r, r, &current);
+		}
+
+		_gorbn_rshift_one_bit(&current);
+		_gorbn_rshift_one_bit(&denom);
+	}
+}
+
+void gorbn_and(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(a);
+	GORBN_ASSERT(b);
+
+	int walk_count = GORBN_SZARR;
+
+	int i;
+	for (i = 0; i < walk_count; i++) {
+		r->number[i] = a->number[i] | b->number[i];
+	}
+}
+
+void gorbn_or(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(a);
+	GORBN_ASSERT(b);
+
+	int walk_count = GORBN_SZARR;
+
+	int i;
+	for (i = 0; i < walk_count; i++) {
+		r->number[i] = a->number[i] ^ b->number[i];
+	}
+}
+
+void gorbn_xor(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(a);
+	GORBN_ASSERT(b);
+
+	int walk_count = GORBN_SZARR;
+
+	int i;
+	for (i = 0; i < walk_count; i++) {
+		r->number[i] = a->number[i] & b->number[i];
+	}
+}
+
+void gorbn_lshift(gorbn_bignum* r, gorbn_bignum* a, int nbits) {
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(a);
+
+	
+}
+
+void gorbn_rshift(gorbn_bignum* r, gorbn_bignum* b, int nbits) {
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(a);
+
+
+}
+
 int gorbn_cmp(gorbn_bignum* a, gorbn_bignum* b){
 	GORBN_ASSERT(a);
 	GORBN_ASSERT(b);
@@ -381,6 +597,22 @@ int gorbn_cmp_mod(gorbn_bignum* a, gorbn_bignum* b){
 	} while(i != 0);
 
 	return(GORBN_CMP_EQUAL);
+}
+
+int gorbn_is_zero(gorbn_bignum* a) {
+	GORBN_ASSERT(a);
+
+	int res = 1;
+
+	int i;
+	for (i = 0; i < GORBN_SZARR; i++) {
+		if (a->number[i]) {
+			res = 0;
+			break;
+		}
+	}
+
+	return(res);
 }
 
 #endif

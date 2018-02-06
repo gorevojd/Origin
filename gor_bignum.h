@@ -57,8 +57,8 @@
 
 #include <stdint.h>
 
-#define GORBN_SZWORD 4
-#define GORBN_SZARR (128 / GORBN_SZWORD)
+#define GORBN_SZWORD 2
+#define GORBN_SZARR (256 / GORBN_SZWORD)
 
 #ifndef GORBN_SZWORD
 #error GORBN_SZWORD must be defined
@@ -136,6 +136,7 @@ GORBN_DEF void gorbn_to_data(void* data, uint32_t data_size, gorbn_bignum* n);
 GORBN_DEF void gorbn_add(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b); /* r = a + b */
 GORBN_DEF void gorbn_sub(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b); /* r = a - b */
 GORBN_DEF void gorbn_mul(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b); /* r = a * b */
+GORBN_DEF void gorbn_sqr(gorbn_bignum* r, gorbn_bignum* a);                  /* r = a ^ 2 */
 GORBN_DEF void gorbn_div(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b); /* r = a / b */
 GORBN_DEF void gorbn_mod(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b); /* r = a % b */
 GORBN_DEF void gorbn_pow(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b);
@@ -311,7 +312,7 @@ static inline void _gorbn_rshift_word(gorbn_bignum* a, int nwords) {
 	}
 }
 
-static inline int _gorbn_get_szbytes(gorbn_bignum* a) {
+static inline int _gorbn_get_ndigits(gorbn_bignum* a) {
 	int result = 0;
 
 	for (int i = GORBN_SZARR - 1; i >= 0; i--) {
@@ -397,28 +398,65 @@ void gorbn_sub(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b){
 	_gorbn_internal_addition(r, a, a->sign, b, b->sign * -1);
 }
 
+/* 
+	NOTE: 
+		Performs multiplication on 'a' and 'b' of size 'n' and 't',
+		and stores the result in 'r'. 'r' must be cleared to zero 
+		before this function call.
+*/
+static inline void _gorbn_internal_mul(
+	gorbn_t* r, 
+	gorbn_t* x, int n, 
+	gorbn_t* y, int t)
+{
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(a);
+	GORBN_ASSERT(b);
+
+	GORBN_ASSERT(n + t + 1 <= GORBN_SZARR)
+
+	int i, j;
+
+	for (i = 0; i < t; i++) {
+		gorbn_utmp_t uv;
+		gorbn_utmp_t c = 0;
+
+		for (j = 0; j < n; j++) {
+			uv = (gorbn_utmp_t)r[i + j] + 
+				(gorbn_utmp_t)x[j] * 
+				(gorbn_utmp_t)y[i] + 
+				c;
+			r[i + j] = uv & GORBN_MAX_VAL;
+			c = (uv >> GORBN_SZWORD_BITS) & GORBN_MAX_VAL;
+		}
+
+		r[i + n + 1] = c;
+	}
+}
+
 void gorbn_mul(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
 	GORBN_ASSERT(r);
 	GORBN_ASSERT(a);
-	GORBN_ASSERT(B);
+	GORBN_ASSERT(b);
 
 	int i, j;
-	int a_szbytes;
-	int b_szbytes;
+	int a_ndigits;
+	int b_ndigits;
 
-	a_szbytes = _gorbn_get_szbytes(a);
-	b_szbytes = _gorbn_get_szbytes(b);
+	a_ndigits = _gorbn_get_ndigits(a);
+	b_ndigits = _gorbn_get_ndigits(b);
 
 	gorbn_bignum buf;
 	gorbn_init(&buf);
 	
-	for (i = 0; i < a_szbytes; ++i) {
+#if 0
+	for (i = 0; i < a_ndigits; ++i) {
 		gorbn_utmp_t carry_lo = 0;
 		gorbn_utmp_t carry_hi = 0;
 		gorbn_utmp_t sum_hi = 0;
 		gorbn_utmp_t sum_lo;
 
-		for (j = 0; j < b_szbytes; ++j) {
+		for (j = 0; j < b_ndigits; ++j) {
 			sum_lo =
 				(gorbn_utmp_t)a->number[i] *
 				(gorbn_utmp_t)b->number[j] +
@@ -449,15 +487,69 @@ void gorbn_mul(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
 		buf.number[i + j] = sum_hi & GORBN_MAX_VAL;
 #endif
 	}
+#else
+	for (i = 0; i < b_ndigits; i++) {
+		gorbn_utmp_t uv;
+		gorbn_utmp_t c = 0;
+
+		for (j = 0; j < a_ndigits; j++) {
+			uv = (gorbn_utmp_t)buf.number[i + j] + 
+				(gorbn_utmp_t)a->number[j] * 
+				(gorbn_utmp_t)b->number[i] + 
+				c;
+			buf.number[i + j] = uv & GORBN_MAX_VAL;
+			c = (uv >> GORBN_SZWORD_BITS) & GORBN_MAX_VAL;
+		}
+
+		buf.number[i + a_ndigits + 1] = c;
+	}
+#endif
 
 	gorbn_copy(r, &buf);
 }
+
+#if 0
+void gorbn_sqr(gorbn_bignum* r, gorbn_bignum* a) {
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(a);
+
+	gorbn_bignum buf;
+	gorbn_init(&buf);
+
+	int t = _gorbn_get_ndigits(a);
+
+	int i;
+	for (i = 0; i < t; i++) {
+		gorbn_utmp_t carry;
+		gorbn_utmp_t temp_val = a->number[i];
+		gorbn_utmp_t sum = (gorbn_utmp_t)buf.number[2 * i] + temp_val * temp_val;
+		buf.number[2 * i] = sum & GORBN_MAX_VAL;
+		carry = (sum >> GORBN_SZWORD_BITS) & GORBN_MAX_VAL;
+
+		int j;
+		for (j = i + 1; j < t; j++) {
+			sum = 
+				(gorbn_utmp_t)buf.number[i + j] + 2 * 
+				(gorbn_utmp_t)a->number[i] * 
+				(gorbn_utmp_t)a->number[j] + 
+				carry;
+			buf.number[i + j] = sum & GORBN_MAX_VAL;
+			carry = (sum >> GORBN_SZWORD_BITS) & GORBN_MAX_VAL;
+		}
+
+		buf.number[i + t] = carry;
+	}
+
+	gorbn_copy(r, &buf);
+}
+#endif
 
 void gorbn_div(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
 	GORBN_ASSERT(r);
 	GORBN_ASSERT(a);
 	GORBN_ASSERT(b);
 
+#if 0
 	gorbn_bignum current, denom, tmp;
 
 	gorbn_from_uint(&current, 1);
@@ -491,6 +583,9 @@ void gorbn_div(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
 		_gorbn_rshift_one_bit(&current);
 		_gorbn_rshift_one_bit(&denom);
 	}
+#else
+
+#endif
 }
 
 void gorbn_and(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {

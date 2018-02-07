@@ -102,6 +102,22 @@ typedef struct gorbn_bignum{
 /*Custom macro for getting the biggest number from two numbers*/
 #define GORBN_MAX(a, b) (((a) > (b)) ? (a) : (b))
 
+#ifdef GOR_BIGNUM_SAFE
+#ifndef GOR_BIGNUM_ENABLE_ASSERTS
+#define GOR_BIGNUM_ENABLE_ASSERTS
+#endif
+#else
+#define GOR_BIGNUM_FAST
+#endif
+
+#ifndef GOR_BIGNUM_FAST
+#define GORBN_SAFE_CONDITION_BEGIN(cond) if(cond) {
+#define GORBN_SAFE_CONDITION_END() }
+#else
+#define GORBN_SAFE_CONDITION_BEGIN(...)
+#define GORBN_SAFE_CONDITION_END()
+#endif
+
 /* Custom assert macro */
 #ifdef GOR_BIGNUM_ENABLE_ASSERTS
 #define GORBN_ASSERT(cond) if(!(cond)){*(int*)0 = 0;}
@@ -120,6 +136,9 @@ typedef struct gorbn_bignum{
 #define GORBN_DEF extern
 #endif
 
+#define _GORBN_INPUT
+#define _GORBN_OUTPUT
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -137,10 +156,12 @@ GORBN_DEF void gorbn_add(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b); /* 
 GORBN_DEF void gorbn_sub(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b); /* r = a - b */
 GORBN_DEF void gorbn_mul(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b); /* r = a * b */
 GORBN_DEF void gorbn_sqr(gorbn_bignum* r, gorbn_bignum* a);                  /* r = a ^ 2 */
-GORBN_DEF void gorbn_div(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b); /* r = a / b */
+GORBN_DEF void gorbn_div(gorbn_bignum* q, gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b); /* q = a / b; a = q * b + r*/
 GORBN_DEF void gorbn_mod(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b); /* r = a % b */
 GORBN_DEF void gorbn_pow(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b);
 GORBN_DEF void gorbn_mul_pow2(gorbn_bignum* r, gorbn_bignum* a, int k); /* r = a * (2 ^ k) */
+GORBN_DEF void gorbn_gcd(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b);
+
 
 /* Bitwise operations: */
 GORBN_DEF void gorbn_and(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b); /* r = a & b */
@@ -262,6 +283,12 @@ void gorbn_to_data(void* data, uint32_t data_size, gorbn_bignum* n){
 	for(i = 0; i < GORBN_SZARR; i++){
 		*to++ = *at++;
 	}
+}
+
+static inline int _gorbn_is_even(gorbn_bignum* a) {
+	int is_even = ((a->number[0] & 1) == 0);
+
+	return(is_even);
 }
 
 static inline void _gorbn_lshift_one_bit(gorbn_bignum* a) {
@@ -386,8 +413,11 @@ void gorbn_add(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b){
 	GORBN_ASSERT(r);
 	GORBN_ASSERT(a);
 	GORBN_ASSERT(b);
-
-	_gorbn_internal_addition(r, a, a->sign, b, b->sign);
+	
+	gorbn_bignum buf;
+	gorbn_init(&buf);
+	_gorbn_internal_addition(&buf, a, a->sign, b, b->sign);
+	gorbn_copy(r, &buf);
 }
 
 void gorbn_sub(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b){
@@ -395,7 +425,10 @@ void gorbn_sub(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b){
 	GORBN_ASSERT(a);
 	GORBN_ASSERT(b);
 
+	gorbn_bignum buf;
+	gorbn_init(&buf);
 	_gorbn_internal_addition(r, a, a->sign, b, b->sign * -1);
+	gorbn_copy(r, &buf);
 }
 
 /* 
@@ -493,22 +526,51 @@ void gorbn_mul(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
 		gorbn_utmp_t c = 0;
 
 		for (j = 0; j < a_ndigits; j++) {
+			GORBN_SAFE_CONDITION_BEGIN(i + j < GORBN_SZARR);
 			uv = (gorbn_utmp_t)buf.number[i + j] + 
 				(gorbn_utmp_t)a->number[j] * 
 				(gorbn_utmp_t)b->number[i] + 
 				c;
 			buf.number[i + j] = uv & GORBN_MAX_VAL;
 			c = (uv >> GORBN_SZWORD_BITS) & GORBN_MAX_VAL;
+			GORBN_SAFE_CONDITION_END();
 		}
 
+		GORBN_SAFE_CONDITION_BEGIN(i + a_ndigits + 1 < GORBN_SZARR);
 		buf.number[i + a_ndigits + 1] = c;
+		GORBN_SAFE_CONDITION_END();
 	}
 #endif
 
 	gorbn_copy(r, &buf);
 }
 
+void gorbn_mul_pow2(gorbn_bignum* r, gorbn_bignum* a, int k) {
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(a);
+	GORBN_ASSERT(k >= 0);
+
+	int word_index = k / GORBN_SZWORD_BITS;
+	int bit_offset = k & GORBN_SZWORD_BITS_MINUS_ONE;
+
 #if 0
+	gorbn_bignum pow2;
+	gorbn_init(&pow2);
+
+	pow2.number[word_index] = 1 << bit_offset;
+
+	gorbn_mul(r, a, &pow2);
+#else
+	gorbn_bignum a_buf;
+	gorbn_init(&a_buf);
+
+	//gorbn_lshift(a_buf, a_buf)
+
+	gorbn_copy(a, &a_buf);
+#endif
+}
+
+
 void gorbn_sqr(gorbn_bignum* r, gorbn_bignum* a) {
 	GORBN_ASSERT(r);
 	GORBN_ASSERT(a);
@@ -542,14 +604,12 @@ void gorbn_sqr(gorbn_bignum* r, gorbn_bignum* a) {
 
 	gorbn_copy(r, &buf);
 }
-#endif
 
-void gorbn_div(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
+void gorbn_div_old(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
 	GORBN_ASSERT(r);
 	GORBN_ASSERT(a);
 	GORBN_ASSERT(b);
 
-#if 0
 	gorbn_bignum current, denom, tmp;
 
 	gorbn_from_uint(&current, 1);
@@ -583,12 +643,304 @@ void gorbn_div(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
 		_gorbn_rshift_one_bit(&current);
 		_gorbn_rshift_one_bit(&denom);
 	}
-#else
-
-#endif
 }
 
-void gorbn_and(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
+void gorbn_div(
+	_GORBN_OUTPUT gorbn_bignum* q, 
+	_GORBN_OUTPUT gorbn_bignum* r, 
+	_GORBN_INPUT gorbn_bignum* a, 
+	_GORBN_INPUT gorbn_bignum* b) 
+{
+	GORBN_ASSERT(q);
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(a);
+	GORBN_ASSERT(b);
+
+	gorbn_bignum q_buf;
+	gorbn_bignum r_buf;
+	gorbn_bignum x_buf;
+	gorbn_bignum tmp_buf;
+	gorbn_bignum tmp_base;
+
+	int i;
+
+	gorbn_init(&q_buf);
+	gorbn_init(&r_buf);
+	gorbn_copy(&x_buf, a);
+
+	int a_ndig = _gorbn_get_ndigits(a);
+	int b_ndig = _gorbn_get_ndigits(b);
+	int diff = a_ndig - b_ndig;
+	int diff_pow2 = diff * GORBN_SZWORD_BITS;
+
+	int begin_cmp_res = gorbn_cmp(a, b);
+	if (begin_cmp_res == GORBN_CMP_EQUAL) {
+		q_buf.number[0] = 1;
+	}
+	else if (begin_cmp_res == GORBN_CMP_LARGER) {
+		/*(2) while x>=y*(b^(n-t)) do the following: q(n-t)=q(n-t)+1, x=x-y*(b^(n-t)) */
+		gorbn_mul_pow2(&tmp_base, b, diff_pow2);
+
+		while (gorbn_cmp(&x_buf, &tmp_base) >= 0) {
+			q_buf.number[diff]++;
+			gorbn_sub(&x_buf, &x_buf, &tmp_base);
+		}
+
+		/*(3) For i from n down to (t + 1) do the following: */
+		for (i = a_ndig; i > b_ndig; i--) {
+
+		}
+	}
+	else {
+		/*a is smaller than b. Invalid case.*/
+	}
+
+
+	gorbn_copy(q, &q_buf);
+	gorbn_copy(r, &r_buf);
+}
+
+void gorbn_pow(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(a);
+	GORBN_ASSERT(b);
+
+	gorbn_bignum buf1;
+	gorbn_bignum buf2;
+	gorbn_bignum exp_buf;
+
+	gorbn_init(&buf1);
+	gorbn_init(&buf2);
+	gorbn_init(&exp_buf);
+
+	/*(1) A <- 1, S <- g*/
+	gorbn_copy(&buf2, a);
+	gorbn_copy(&exp_buf, b);
+
+	buf1.number[0] = 1;
+
+	/*(2) While e != 0 do the following: */
+	while (!gorbn_is_zero(&exp_buf)) {
+		int is_odd = exp_buf.number[0] & 1;
+
+		/*(2.1) If e is odd then A <- A * S */
+		if (is_odd) {
+			gorbn_mul(&buf1, &buf1, &buf2);
+		}
+		
+		/*(2.2) e <- e / 2 */
+		_gorbn_rshift_one_bit(&exp_buf);
+
+		/*(2.3) e != 0 then S <- S * S */
+		if (!gorbn_is_zero(&exp_buf)) {
+			gorbn_mul(&buf2, &buf2, &buf2);
+		}
+	}
+
+	gorbn_copy(r, &buf1);
+}
+
+
+/*
+	DESCRIPTION:
+		Binary greatest common divisor algorithm
+
+	SOURCE:
+		Handbook of applied cryptography. 1996
+*/
+void gorbn_gcd(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(a);
+	GORBN_ASSERT(b);
+
+	gorbn_bignum g_buf;
+	gorbn_bignum t_buf;
+	gorbn_bignum a_buf;
+	gorbn_bignum b_buf;
+
+	gorbn_init(&g_buf);
+	gorbn_init(&t_buf);
+	gorbn_copy(&a_buf, a);
+	gorbn_copy(&b_buf, b);
+
+	/*(1) g <- 1*/
+	g_buf.number[0] = 1;
+
+	/*(2)While both x and y are even do the following: x=x/2, y=y/2, g=2*g */
+	while (
+		_gorbn_is_even(&a_buf) &&
+		_gorbn_is_even(&b_buf))
+	{
+		_gorbn_rshift_one_bit(&a_buf);
+		_gorbn_rshift_one_bit(&b_buf);
+		_gorbn_lshift_one_bit(&g_buf);
+	}
+
+	/*(3) While x != 0 do the follwing */
+	while (!gorbn_is_zero(&a_buf)) {
+		/*(3.1) While x is even do: x = x / 2 */
+		while (_gorbn_is_even(&a_buf)) {
+			_gorbn_rshift_one_bit(&a_buf);
+		}
+
+		/*(3.2) While y is even do: y = y / 2 */
+		while (_gorbn_is_even(&b_buf)) {
+			_gorbn_rshift_one_bit(&b_buf);
+		}
+
+		/*(3.3) t = |x-y|/2 */
+		gorbn_sub(&t_buf, &a_buf, &b_buf);
+		t_buf.sign = 1;
+		_gorbn_rshift_one_bit(&t_buf);
+
+		/*(3.4) If x>=y then x=t, otherwise, y=t*/
+		int cmp_res = gorbn_cmp(&a_buf, &b_buf);
+		if (cmp_res >= GORBN_CMP_EQUAL) {
+			gorbn_copy(&a_buf, &t_buf);
+		}
+		else {
+			gorbn_copy(&b_buf, &t_buf);
+		}
+	}
+
+	/*(4) Return(g * y) */
+	gorbn_mul(r, &b_buf, &g_buf);
+}
+
+
+/*
+	DESCRIPTION:
+		Binary extended gcd algorithm
+
+		Given integers x and y, computes integers a and b such
+		that a*x + b*y = v, where v=gcd(x, y).
+
+	SOURCE:
+		Handbook of applied cryptography. 1996
+*/
+void gorbn_gcd_ext(
+	_GORBN_OUTPUT gorbn_bignum* r,
+	_GORBN_OUTPUT gorbn_bignum* a,
+	_GORBN_OUTPUT gorbn_bignum* b,
+	_GORBN_INPUT gorbn_bignum* x,
+	_GORBN_INPUT gorbn_bignum* y)
+{
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(a);
+	GORBN_ASSERT(b);
+	GORBN_ASSERT(x);
+	GORBN_ASSERT(y);
+
+	gorbn_bignum g_buf;
+	gorbn_bignum x_buf;
+	gorbn_bignum y_buf;
+	gorbn_bignum u_buf;
+	gorbn_bignum v_buf;
+	gorbn_bignum A_buf;
+	gorbn_bignum B_buf;
+	gorbn_bignum C_buf;
+	gorbn_bignum D_buf;
+
+	gorbn_init(&g_buf);
+	gorbn_copy(&x_buf, x);
+	gorbn_copy(&y_buf, y);
+	gorbn_init(&u_buf);
+	gorbn_init(&v_buf);
+	gorbn_init(&A_buf);
+	gorbn_init(&B_buf);
+	gorbn_init(&C_buf);
+	gorbn_init(&D_buf);
+
+	/*(1) g=1 */
+	g_buf.number[0] = 1;
+
+	/*(2) while x and y are both even, do the following: x=x/2, y=y/2, g=2*g */
+	while (
+		_gorbn_is_even(&x_buf) &&
+		_gorbn_is_even(&y_buf))
+	{
+		_gorbn_rshift_one_bit(&x_buf);
+		_gorbn_rshift_one_bit(&y_buf);
+		_gorbn_lshift_one_bit(&g_buf);
+	}
+
+	/*(3) u=x, v=y, A=1, B=0, C=0, D=1*/
+	gorbn_copy(&u_buf, &x_buf);
+	gorbn_copy(&v_buf, &y_buf);
+	A_buf.number[0] = 1;
+	D_buf.number[0] = 1;
+
+	step_4:
+	/*(4) while u is even do the following: */
+	while (_gorbn_is_even(&u_buf)) {
+		/*(4.1) u = u / 2 */
+		_gorbn_rshift_one_bit(&u_buf);
+
+		/*(4.2) if Amod2==Bmod2==0mod2 then A=A/2, B=B/2, else A=(A + y)/2, B=(B-x)/2 */
+		if (_gorbn_is_even(&A_buf) &&
+			_gorbn_is_even(&B_buf))
+		{
+			_gorbn_rshift_one_bit(&A_buf);
+			_gorbn_rshift_one_bit(&B_buf);
+		}
+		else {
+			gorbn_add(&A_buf, &A_buf, &y_buf);
+			_gorbn_rshift_one_bit(&A_buf);
+
+			gorbn_sub(&B_buf, &B_buf, &x_buf);
+			_gorbn_rshift_one_bit(&B_buf);
+		}
+	}
+
+	/*(5) While v is even do the following: */
+	while (_gorbn_is_even(&v_buf)) {
+		/*(5.1) v = v / 2 */
+		_gorbn_rshift_one_bit(&v_buf);
+
+		/*(5.2) if Cmod2==Dmod2==0mod2 then C=C/2, D=D/2, else C=(C + y)/2, D=(D-x)/2 */
+		if (_gorbn_is_even(&C_buf) &&
+			_gorbn_is_even(&D_buf))
+		{
+			_gorbn_rshift_one_bit(&C_buf);
+			_gorbn_rshift_one_bit(&D_buf);
+		}
+		else {
+			gorbn_add(&C_buf, &C_buf, &y_buf);
+			_gorbn_rshift_one_bit(&C_buf);
+
+			gorbn_sub(&D_buf, &D_buf, &x_buf);
+			_gorbn_rshift_one_bit(&D_buf);
+		}
+	}
+
+	/*(6) 
+		if u>=v then u=u-v, A=A-C, B=B-D
+		otherwise, v=v-u, C=C-A, D=D-B */
+	int cmp_res = gorbn_cmp(&u_buf, &v_buf);
+	if (cmp_res >= GORBN_CMP_EQUAL) {
+		gorbn_sub(&u_buf, &u_buf, &v_buf);
+		gorbn_sub(&A_buf, &A_buf, &C_buf);
+		gorbn_sub(&B_buf, &B_buf, &D_buf);
+	}
+	else {
+		gorbn_sub(&v_buf, &v_buf, &u_buf);
+		gorbn_sub(&C_buf, &C_buf, &A_buf);
+		gorbn_sub(&D_buf, &D_buf, &B_buf);
+	}
+
+	/*(7) If u=0, then a=C, b=D, and return(a, b, g*v); else go to step 4 */
+	if (gorbn_is_zero(&u_buf)) {
+		gorbn_copy(a, &C_buf);
+		gorbn_copy(b, &D_buf);
+		gorbn_mul(r, &g_buf, &v_buf);
+	}
+	else {
+		goto step_4;
+	}
+}
+
+void gorbn_and(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b)
+{
 	GORBN_ASSERT(r);
 	GORBN_ASSERT(a);
 	GORBN_ASSERT(b);

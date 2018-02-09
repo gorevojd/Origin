@@ -159,6 +159,8 @@ GORBN_DEF void gorbn_mul(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b); /* 
 GORBN_DEF void gorbn_mul_word(gorbn_bignum* r, gorbn_bignum* a, gorbn_t w);
 GORBN_DEF void gorbn_sqr(gorbn_bignum* r, gorbn_bignum* a);                  /* r = a ^ 2 */
 GORBN_DEF void gorbn_div(gorbn_bignum* q, gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b); /* q = a / b; a = q * b + r*/
+GORBN_DEF void gorbn_div_word(gorbn_bignum* q, gorbn_t* r, gorbn_bignum* x, gorbn_t w);
+GORBN_DEF void gorbn_mod_word(gorbn_t* r, gorbn_bignum* n, gorbn_t w);
 GORBN_DEF void gorbn_mod(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b); /* r = a % b */
 GORBN_DEF void gorbn_pow(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b);
 GORBN_DEF void gorbn_mul_pow2(gorbn_bignum* r, gorbn_bignum* a, int k); /* r = a * (2 ^ k) */
@@ -543,6 +545,8 @@ void gorbn_mul(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
 		buf.number[i + a_ndigits] = c;
 		GORBN_SAFE_CONDITION_END();
 	}
+
+	buf.sign = a->sign * b->sign;
 #endif
 
 	gorbn_copy(r, &buf);
@@ -638,6 +642,57 @@ void gorbn_div_old(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
 		_gorbn_rshift_one_bit(&current);
 		_gorbn_rshift_one_bit(&denom);
 	}
+}
+
+void gorbn_div_word(
+	_GORBN_OUTPUT gorbn_bignum* q, 
+	_GORBN_OUTPUT gorbn_t* r,
+	_GORBN_INPUT gorbn_bignum* x,
+	_GORBN_INPUT gorbn_t w)
+{
+	GORBN_ASSERT(q);
+	GORBN_ASSERT(x);
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(w > 0);
+
+	gorbn_bignum buf;
+	gorbn_init(&buf);
+
+	int i;
+	gorbn_t tmp_r = 0;
+	gorbn_utmp_t divisor = 0;
+	for (i = GORBN_SZARR - 1; i >= 0; i--) {
+		divisor = tmp_r;
+		divisor <<= GORBN_SZWORD_BITS;
+		divisor |= q->number[i];
+		buf.number[i] = (gorbn_t)(divisor / w);
+		tmp_r = (gorbn_t)(divisor % w);
+	}
+	
+	gorbn_copy(q, &buf);
+	*r = tmp_r;
+}
+
+void gorbn_mod_word(
+	_GORBN_OUTPUT gorbn_t* r, 
+	_GORBN_INPUT gorbn_bignum* n, 
+	_GORBN_INPUT gorbn_t w) 
+{
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(n);
+	GORBN_ASSERT(w > 0);
+
+	int i;
+	gorbn_t tmp_r = 0;
+	gorbn_utmp_t divisor = 0;
+	for (i = GORBN_SZARR - 1; i >= 0; i--) {
+		divisor = tmp_r;
+		divisor <<= GORBN_SZWORD_BITS;
+		divisor |= n->number[i];
+		tmp_r = (gorbn_t)(divisor % w);
+	}
+
+	*r = tmp_r;
 }
 
 void gorbn_div(

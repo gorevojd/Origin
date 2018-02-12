@@ -435,7 +435,7 @@ void gorbn_sub(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b){
 
 	gorbn_bignum buf;
 	gorbn_init(&buf);
-	_gorbn_internal_addition(r, a, a->sign, b, b->sign * -1);
+	_gorbn_internal_addition(&buf, a, a->sign, b, b->sign * -1);
 	gorbn_copy(r, &buf);
 }
 
@@ -664,7 +664,7 @@ void gorbn_div_word(
 	for (i = GORBN_SZARR - 1; i >= 0; i--) {
 		divisor = tmp_r;
 		divisor <<= GORBN_SZWORD_BITS;
-		divisor |= q->number[i];
+		divisor |= x->number[i];
 		buf.number[i] = (gorbn_t)(divisor / w);
 		tmp_r = (gorbn_t)(divisor % w);
 	}
@@ -706,19 +706,26 @@ void gorbn_div(
 	GORBN_ASSERT(x);
 	GORBN_ASSERT(y);
 
+#if 0
 	gorbn_bignum q_buf;
-	gorbn_bignum r_buf;
 	gorbn_bignum x_buf;
+	gorbn_bignum r_buf;
 	gorbn_bignum tmp_buf;
 	gorbn_bignum tmp_base;
+	gorbn_bignum tmp_3_1;
 	gorbn_bignum tmp_3_2;
+	gorbn_bignum tmp2_3_2;
+	gorbn_bignum cmpr_3_2;
 	gorbn_bignum tmp_3_3;
 
 	int i;
 
 	gorbn_init(&q_buf);
-	gorbn_init(&r_buf);
+	gorbn_init(&tmp_3_1);
 	gorbn_init(&tmp_3_2);
+	gorbn_init(&r_buf);
+	//gorbn_init(&tmp2_3_2);
+	gorbn_init(&cmpr_3_2);
 	gorbn_copy(&x_buf, x);
 
 	int a_ndig = _gorbn_get_ndigits(x);
@@ -755,13 +762,31 @@ void gorbn_div(
 				q_buf.number[i_min_t_min_one] = GORBN_MAX_VAL;
 			}
 			else {
-				//q_buf.number[i_min_t_min_one] = ???;
+				tmp_3_1.number[1] = x_buf.number[i];
+				tmp_3_1.number[0] = x_buf.number[i - 1];
+				gorbn_t rst = 0;
+				gorbn_div_word(&tmp_buf, &rst, &tmp_3_1, y->number[t]);
+				//SUPER_IMPORTANT: What should I take from tmp_buf????
+				q_buf.number[i_min_t_min_one] = tmp_buf.number[0];
 			}
 
 			/*(3.2) While (q[i-t-1]*(y[t]*b+y[t-1]) > x[i]*b*b + x[i-1]*b + x[i-2]) 
 					do: q[i-t-1]=q[i-t-1]-1
 			*/
+			//NOTE(Dima): Possible overlap
+			cmpr_3_2.number[2] = x_buf.number[i];
+			cmpr_3_2.number[1] = x_buf.number[i - 1];
+			cmpr_3_2.number[0] = x_buf.number[i - 2];
 
+			gorbn_mul_word(&tmp2_3_2, &tmp_3_2, q_buf.number[i_min_t_min_one]);
+			int loop_iterations = 0;
+			while (gorbn_cmp(&tmp2_3_2, &cmpr_3_2) == GORBN_CMP_LARGER) {
+				loop_iterations++;
+
+				q_buf.number[i_min_t_min_one]--;
+
+				gorbn_mul_word(&tmp2_3_2, &tmp_3_2, q_buf.number[i_min_t_min_one]);
+			}
 
 			/*(3.3) x = x-q[i-t-1] * y * b^[i-t-1] */
 			gorbn_mul_pow2(&tmp_3_3, y, i_min_t_min_one * GORBN_SZWORD_BITS);
@@ -776,15 +801,101 @@ void gorbn_div(
 		}
 
 		/*(4) r = x */
-		gorbn_copy(r, &x_buf);
+		gorbn_copy(&r_buf, &x_buf);
+
+
+
 	}
 	else {
 		/*a is smaller than b. Invalid case.*/
+		//GORBN_ASSERT(0);
 	}
 
 	/*(5) Return(q, r) */
+	gorbn_copy(r, &r_buf);
+	gorbn_copy(q, &q_buf);
+#else
+	gorbn_bignum a_norm, b_norm;
+	gorbn_bignum q_buf, r_buf;
+	
+	gorbn_copy(&a_norm, x);
+	gorbn_copy(&b_norm, y);
+
+	gorbn_init(&q_buf);
+	gorbn_init(&r_buf);
+
+	int a_ndig = _gorbn_get_ndigits(x);
+	int b_ndig = _gorbn_get_ndigits(y);
+
+	int i, j;
+	gorbn_utmp_t mod_bn = (gorbn_utmp_t)GORBN_MAX_VAL + 1;
+	gorbn_utmp_t p = 0;
+	gorbn_stmp_t carry = 0;
+	gorbn_stmp_t t;
+
+	int begin_cmp_res = gorbn_cmp(x, y);
+	if (begin_cmp_res == GORBN_CMP_EQUAL) {
+		q_buf.number[0] = 1;
+	}
+	else if (begin_cmp_res == GORBN_CMP_LARGER) {
+
+		for (j = a_ndig - b_ndig; j >= 0; j--) {
+			gorbn_utmp_t c_pred, r_pred;
+			gorbn_utmp_t asd =
+				((gorbn_utmp_t)a_norm.number[j + b_ndig] * mod_bn) +
+				(gorbn_utmp_t)a_norm.number[j + b_ndig - 1];
+
+			c_pred = asd / b_norm.number[b_ndig - 1];
+			r_pred = asd - c_pred * b_norm.number[b_ndig - 1];
+
+			do {
+				p = 0;
+				if (
+					(c_pred >= mod_bn) ||
+					((c_pred * (gorbn_utmp_t)b_norm.number[b_ndig - 2]) > (mod_bn * r_pred + (gorbn_utmp_t)a_norm.number[j + b_ndig - 2])))
+				{
+					c_pred--;
+					r_pred += b_norm.number[b_ndig - 1];
+					if (r_pred < mod_bn) {
+						p = 1;
+					}
+				}
+			} while (p);
+
+			carry = 0;
+			for (i = 0; i < b_ndig; i++) {
+				p = c_pred * b_norm.number[i];
+				t = a_norm.number[i + j] - carry - (p & GORBN_MAX_VAL);
+				a_norm.number[i + j] = (gorbn_t)t;
+				carry = (p >> GORBN_SZWORD_BITS) - (t >> GORBN_SZWORD_BITS);
+			}
+
+			t = a_norm.number[j + b_ndig] - carry;
+			a_norm.number[j + b_ndig] = (gorbn_t)t;
+			q_buf.number[j] = (gorbn_t)c_pred;
+
+			if (t < 0) {
+				q_buf.number[j]--;
+				carry = 0;
+				for (i = 0; i < b_ndig; i++) {
+					t = a_norm.number[i + j] + b_norm.number[i] + carry;
+					a_norm.number[i + j] = (gorbn_t)t;
+					carry = t >> GORBN_SZWORD_BITS;
+				}
+				a_norm.number[j + b_ndig] = (gorbn_t)(a_norm.number[j + b_ndig] + carry);
+			}
+		}
+
+		gorbn_copy(&r_buf, &a_norm);
+	}
+	else {
+		//INVALID PATH
+		//FIRST NUM SHOULD BE >= SECOND
+	}
+
 	gorbn_copy(q, &q_buf);
 	gorbn_copy(r, &r_buf);
+#endif
 }
 
 void gorbn_pow(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {

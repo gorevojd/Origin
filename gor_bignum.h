@@ -160,12 +160,18 @@ GORBN_DEF void gorbn_mul_word(gorbn_bignum* r, gorbn_bignum* a, gorbn_t w);
 GORBN_DEF void gorbn_sqr(gorbn_bignum* r, gorbn_bignum* a);                  /* r = a ^ 2 */
 GORBN_DEF void gorbn_div(gorbn_bignum* q, gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b); /* q = a / b; a = q * b + r*/
 GORBN_DEF void gorbn_div_word(gorbn_bignum* q, gorbn_t* r, gorbn_bignum* x, gorbn_t w);
-GORBN_DEF void gorbn_mod_word(gorbn_t* r, gorbn_bignum* n, gorbn_t w);
 GORBN_DEF void gorbn_mod(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b); /* r = a % b */
+GORBN_DEF void gorbn_mod_word(gorbn_t* r, gorbn_bignum* n, gorbn_t w);
 GORBN_DEF void gorbn_pow(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b);
 GORBN_DEF void gorbn_mul_pow2(gorbn_bignum* r, gorbn_bignum* a, int k); /* r = a * (2 ^ k) */
 GORBN_DEF void gorbn_div_pow2(gorbn_bignum* r, gorbn_bignum* a, int k); /* r = a / (2 ^ k) */
 GORBN_DEF void gorbn_gcd(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b);
+
+GORBN_DEF void gorbn_mod(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* m);
+GORBN_DEF void gorbn_mod_pow2(gorbn_bignum* r, gorbn_bignum* a, int k);
+GORBN_DEF void gorbn_sub_mod(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b, gorbn_bignum* m);
+GORBN_DEF void gorbn_add_mod(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b, gorbn_bignum* m);
+GORBN_DEF void gorbn_mul_mod(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b, gorbn_bignum* m);
 
 /* Bitwise operations: */
 GORBN_DEF void gorbn_and(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b); /* r = a & b */
@@ -467,6 +473,7 @@ void gorbn_mul_word(gorbn_bignum* r, gorbn_bignum* a, gorbn_t w) {
 
 	GORBN_SAFE_CONDITION_BEGIN(a_ndigits < GORBN_SZARR);
 	buf.number[a_ndigits] = c;
+	buf.sign = a->sign;
 	GORBN_SAFE_CONDITION_END();
 
 	gorbn_copy(r, &buf);
@@ -570,6 +577,7 @@ void gorbn_div_pow2(gorbn_bignum* r, gorbn_bignum* a, int k) {
 }
 
 //TODO(Dima): This funciton not working
+#if 0
 void gorbn_sqr(gorbn_bignum* r, gorbn_bignum* a) {
 	GORBN_ASSERT(r);
 	GORBN_ASSERT(a);
@@ -603,6 +611,7 @@ void gorbn_sqr(gorbn_bignum* r, gorbn_bignum* a) {
 
 	gorbn_copy(r, &buf);
 }
+#endif
 
 void gorbn_div_old(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
 	GORBN_ASSERT(r);
@@ -669,10 +678,13 @@ void gorbn_div_word(
 		tmp_r = (gorbn_t)(divisor % w);
 	}
 	
+	buf.sign = x->sign;
+
 	gorbn_copy(q, &buf);
 	*r = tmp_r;
 }
 
+//TODO: make correct sign when n is negative
 void gorbn_mod_word(
 	_GORBN_OUTPUT gorbn_t* r, 
 	_GORBN_INPUT gorbn_bignum* n, 
@@ -695,14 +707,20 @@ void gorbn_mod_word(
 	*r = tmp_r;
 }
 
+
+/*
+	NOTE(Dima):
+		q - the quotient output param. Can be NULL.
+		r - the remainder output param. Can be NULL.
+		x - the divident input param.
+		y - the divisor input param.
+*/
 void gorbn_div(
-	_GORBN_OUTPUT gorbn_bignum* q, 
-	_GORBN_OUTPUT gorbn_bignum* r, 
+	_GORBN_OUTPUT_OPT gorbn_bignum* q, 
+	_GORBN_OUTPUT_OPT gorbn_bignum* r, 
 	_GORBN_INPUT gorbn_bignum* x, 
 	_GORBN_INPUT gorbn_bignum* y) 
 {
-	GORBN_ASSERT(q);
-	GORBN_ASSERT(r);
 	GORBN_ASSERT(x);
 	GORBN_ASSERT(y);
 
@@ -835,9 +853,22 @@ void gorbn_div(
 
 	int begin_cmp_res = gorbn_cmp(x, y);
 	if (begin_cmp_res == GORBN_CMP_EQUAL) {
+		//NOTE(DIMA): If divisor is equal to divident than return 1
 		q_buf.number[0] = 1;
 	}
+	else if (b_ndig == 1) {
+		//NOTE(DIMA): If divisor is small number (== 1 word)
+		
+		for (j = a_ndig - 1; j >= 0; j--) {
+			q_buf.number[j] = (gorbn_t)((carry * mod_bn + x->number[j]) / y->number[0]);
+			carry = (carry * mod_bn + x->number[j]) - q_buf.number[j] * y->number[0];
+		}
+
+		r_buf.number[0] = (gorbn_t)carry;
+	}
 	else if (begin_cmp_res == GORBN_CMP_LARGER) {
+
+		q_buf.sign = x->sign * y->sign;
 
 		for (j = a_ndig - b_ndig; j >= 0; j--) {
 			gorbn_utmp_t c_pred, r_pred;
@@ -893,9 +924,106 @@ void gorbn_div(
 		//FIRST NUM SHOULD BE >= SECOND
 	}
 
-	gorbn_copy(q, &q_buf);
-	gorbn_copy(r, &r_buf);
+	if (q) {
+		gorbn_copy(q, &q_buf);
+	}
+
+	if (r) {
+		gorbn_copy(r, &r_buf);
+	}
 #endif
+}
+
+void gorbn_mod(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* m) {
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(a);
+	GORBN_ASSERT(m);
+
+	gorbn_div(0, r, a, m);
+
+	if (a->sign == -1) {
+		if (!gorbn_is_zero(r)) {
+			r->sign = -1;
+			int tmp_sign = m->sign;
+			m->sign = 1;
+			gorbn_add(r, r, m);
+			m->sign = tmp_sign;
+		}
+	}
+}
+
+void gorbn_mod_pow2(gorbn_bignum* r, gorbn_bignum* a, int k) {
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(a);
+	GORBN_ASSERT(k >= 0);
+
+	GORBN_ASSERT(a->sign > 0);
+
+	gorbn_bignum r_buf;
+
+	int i;
+	int j;
+
+	int nwords_masked = k >> GORBN_SZWORD_BITS;
+	int nwords_rest = k & GORBN_SZWORD_BITS_MINUS_ONE;
+
+	gorbn_t last_word_mask = 0;
+
+	gorbn_init(&r_buf);
+
+	for (i = 0; i < nwords_masked; i++) {
+		r_buf.number[i] = a->number[i] & GORBN_MAX_VAL;
+	}
+
+	for (j = 0; j < nwords_rest; j++) {
+		last_word_mask |= (1 << i);
+	}
+	
+	r_buf.number[i] = a->number[i] & last_word_mask;
+
+	gorbn_copy(r, &r_buf);
+}
+
+void gorbn_sub_mod(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b, gorbn_bignum* m) {
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(a);
+	GORBN_ASSERT(b);
+	GORBN_ASSERT(m);
+
+	GORBN_ASSERT(a->sign > 0);
+	GORBN_ASSERT(b->sign > 0);
+	GORBN_ASSERT(m->sign > 0);
+
+	gorbn_sub(r, a, b);
+	gorbn_div(0, r, r, m);
+}
+
+void gorbn_add_mod(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b, gorbn_bignum* m) {
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(a);
+	GORBN_ASSERT(b);
+	GORBN_ASSERT(m);
+
+	GORBN_ASSERT(a->sign > 0);
+	GORBN_ASSERT(b->sign > 0);
+	GORBN_ASSERT(m->sign > 0);
+
+	gorbn_add(r, a, b);
+	gorbn_div(0, r, r, m);
+}
+
+void gorbn_mul_mod(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b, gorbn_bignum* m) {
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(a);
+	GORBN_ASSERT(b);
+	GORBN_ASSERT(m);
+
+	GORBN_ASSERT(a->sign > 0);
+	GORBN_ASSERT(b->sign > 0);
+	GORBN_ASSERT(m->sign > 0);
+
+	gorbn_mul(r, a, b);
+	gorbn_div(0, r, r, m);
 }
 
 void gorbn_pow(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
@@ -937,7 +1065,6 @@ void gorbn_pow(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
 
 	gorbn_copy(r, &buf1);
 }
-
 
 /*
 	DESCRIPTION:

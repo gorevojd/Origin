@@ -168,6 +168,7 @@ GORBN_DEF void gorbn_div_pow2(gorbn_bignum* r, gorbn_bignum* a, int k); /* r = a
 GORBN_DEF void gorbn_gcd(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b);
 
 GORBN_DEF void gorbn_mod(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* m);
+GORBN_DEF void gorbn_mod_inv(gorbn_bignum* r, gorbn_bignum *a, gorbn_bignum* m);
 GORBN_DEF void gorbn_mod_pow2(gorbn_bignum* r, gorbn_bignum* a, int k);
 GORBN_DEF void gorbn_sub_mod(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b, gorbn_bignum* m);
 GORBN_DEF void gorbn_add_mod(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b, gorbn_bignum* m);
@@ -378,6 +379,7 @@ static inline void _gorbn_internal_addition(
 	int carry = 0;
 	int i;
 
+	int big_sign;
 	gorbn_bignum* big;
 	gorbn_bignum* low;
 
@@ -398,10 +400,12 @@ static inline void _gorbn_internal_addition(
 		if(comp_res >= 0){
 			big = a;
 			low = b;
+			big_sign = a_sign;
 		}
 		else{
 			big = b;
 			low = a;
+			big_sign = b_sign;
 		}
 
 		/* Subtracting: dst = big - small */
@@ -414,7 +418,11 @@ static inline void _gorbn_internal_addition(
 		}
 
 		/* Detecting the result sign */
+#if 0
 		if(a_sign > 0 && comp_res >= 0){
+#else
+		if(big_sign > 0){
+#endif
 			dst->sign = 1;
 		}
 		else{
@@ -1176,8 +1184,6 @@ void gorbn_gcd_ext(
 	gorbn_init(&g_buf);
 	gorbn_copy(&x_buf, x);
 	gorbn_copy(&y_buf, y);
-	gorbn_init(&u_buf);
-	gorbn_init(&v_buf);
 	gorbn_init(&A_buf);
 	gorbn_init(&B_buf);
 	gorbn_init(&C_buf);
@@ -1227,7 +1233,8 @@ void gorbn_gcd_ext(
 	}
 
 	/*(5) While v is even do the following: */
-	while (_gorbn_is_even(&v_buf)) 
+	while (_gorbn_is_even(&v_buf) && 
+		!gorbn_is_zero(&v_buf)) 
 	{
 		/*(5.1) v = v / 2 */
 		_gorbn_rshift_one_bit(&v_buf);
@@ -1283,6 +1290,8 @@ void gorbn_gcd_ext(
 		count_go_back++;
 		goto step_4;
 	}
+
+	int asd = 1;
 }
 
 void gorbn_and(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b)

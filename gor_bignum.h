@@ -49,10 +49,6 @@
 
 	AUTHOR:
 		Gorevoy Dmitry - github.com/gorevojd
-
-	OTHER:
-		Basic code was taken from https://github.com/kokke/tiny-bignum-c
-		and then modified.
 */
 
 #include <stdint.h>
@@ -160,16 +156,17 @@ GORBN_DEF void gorbn_mul_word(gorbn_bignum* r, gorbn_bignum* a, gorbn_t w);
 GORBN_DEF void gorbn_sqr(gorbn_bignum* r, gorbn_bignum* a);                  /* r = a ^ 2 */
 GORBN_DEF void gorbn_div(gorbn_bignum* q, gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b); /* q = a / b; a = q * b + r*/
 GORBN_DEF void gorbn_div_word(gorbn_bignum* q, gorbn_t* r, gorbn_bignum* x, gorbn_t w);
-GORBN_DEF void gorbn_mod(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b); /* r = a % b */
-GORBN_DEF void gorbn_mod_word(gorbn_t* r, gorbn_bignum* n, gorbn_t w);
 GORBN_DEF void gorbn_pow(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b);
 GORBN_DEF void gorbn_mul_pow2(gorbn_bignum* r, gorbn_bignum* a, int k); /* r = a * (2 ^ k) */
 GORBN_DEF void gorbn_div_pow2(gorbn_bignum* r, gorbn_bignum* a, int k); /* r = a / (2 ^ k) */
 GORBN_DEF void gorbn_gcd(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b);
+GORBN_DEF void gorbn_gcd_ext(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b, gorbn_bignum* x, gorbn_bignum* y);
 
 GORBN_DEF void gorbn_mod(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* m);
-GORBN_DEF void gorbn_mod_inv(gorbn_bignum* r, gorbn_bignum *a, gorbn_bignum* m);
+GORBN_DEF void gorbn_inv_mod(gorbn_bignum* r, gorbn_bignum *a, gorbn_bignum* m); /* r = (a ^ -1) mod m */
+GORBN_DEF void gorbn_mul_inv_mod(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b, gorbn_bignum* m); /* r = a * (b ^ (-1)) mod m */
 GORBN_DEF void gorbn_mod_pow2(gorbn_bignum* r, gorbn_bignum* a, int k);
+GORBN_DEF void gorbn_mod_word(gorbn_t* r, gorbn_bignum* n, gorbn_t w);
 GORBN_DEF void gorbn_sub_mod(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b, gorbn_bignum* m);
 GORBN_DEF void gorbn_add_mod(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b, gorbn_bignum* m);
 GORBN_DEF void gorbn_mul_mod(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b, gorbn_bignum* m);
@@ -184,7 +181,6 @@ GORBN_DEF void gorbn_rshift(gorbn_bignum* r, gorbn_bignum* b, int nbits); /* r =
 /* Special operators and comparison */
 GORBN_DEF int gorbn_cmp(gorbn_bignum* a, gorbn_bignum* b);
 GORBN_DEF int gorbn_cmp_mod(gorbn_bignum* a, gorbn_bignum* b);
-GORBN_DEF int gorbn_cmp_zero(gorbn_bignum* a);
 GORBN_DEF int gorbn_is_zero(gorbn_bignum* a);
 
 
@@ -1159,13 +1155,12 @@ void gorbn_gcd(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b) {
 		y - input number 2
 */
 void gorbn_gcd_ext(
-	_GORBN_OUTPUT gorbn_bignum* r,
+	_GORBN_OUTPUT_OPT gorbn_bignum* r,
 	_GORBN_OUTPUT_OPT gorbn_bignum* a,
 	_GORBN_OUTPUT_OPT gorbn_bignum* b,
 	_GORBN_INPUT gorbn_bignum* x,
 	_GORBN_INPUT gorbn_bignum* y)
 {
-	GORBN_ASSERT(r);
 	GORBN_ASSERT(x);
 	GORBN_ASSERT(y);
 
@@ -1253,10 +1248,6 @@ void gorbn_gcd_ext(
 			gorbn_sub(&D_buf, &D_buf, &x_buf);
 			_gorbn_rshift_one_bit(&D_buf);
 		}
-
-		if (gorbn_is_zero(&v_buf)) {
-			break;
-		}
 	}
 
 	/*(6) 
@@ -1284,7 +1275,9 @@ void gorbn_gcd_ext(
 			gorbn_copy(b, &D_buf);
 		}
 
-		gorbn_mul(r, &g_buf, &v_buf);
+		if (r) {
+			gorbn_mul(r, &g_buf, &v_buf);
+		}
 	}
 	else {
 		count_go_back++;
@@ -1293,6 +1286,54 @@ void gorbn_gcd_ext(
 
 	int asd = 1;
 }
+
+void gorbn_inv_mod(gorbn_bignum* r, gorbn_bignum *a, gorbn_bignum* m) {
+	GORBN_ASSERT(r);
+	GORBN_ASSERT(a);
+	GORBN_ASSERT(m);
+
+#if 0
+	gorbn_gcd_ext(0, r, 0, a, m);
+
+	if (r->sign < 0) {
+		gorbn_add(r, r, m);
+	}
+#else
+	gorbn_bignum buf1;
+	gorbn_bignum buf2;
+	gorbn_bignum buf_c;
+	gorbn_bignum buf_r;
+	gorbn_bignum buf_one;
+	gorbn_bignum buf_zero;
+
+	gorbn_copy(&buf1, m);
+	gorbn_mod(&buf2, a, m);
+	gorbn_init(&buf_one);
+	buf_one.number[0] = 1;
+	gorbn_init(&buf_zero);
+
+	gorbn_div(&buf_c, &buf_r, &buf1, &buf2);
+	
+	while (!gorbn_is_zero(&buf_r)) {
+		gorbn_mul(&buf1, &buf_c, &buf_one);
+		
+		gorbn_sub(&buf_c, &buf_zero, &buf1);
+		
+		gorbn_copy(&buf_zero, &buf_one);
+		
+		gorbn_copy(&buf_one, &buf_c);
+		
+		gorbn_copy(&buf1, &buf2);
+		
+		gorbn_copy(&buf2, &buf_r);
+		
+		gorbn_div(&buf_c, &buf_r, &buf1, &buf2);
+	}
+
+	gorbn_mod(r, &buf_one, m);
+#endif
+}
+
 
 void gorbn_and(gorbn_bignum* r, gorbn_bignum* a, gorbn_bignum* b)
 {
